@@ -15,11 +15,13 @@ import { FileNode } from './FileNode'
 import type { NodeState } from './FileNode'
 import { layoutGraph, toFlowEdge, LAYOUT_GRID } from '../lib/layout'
 import type { DependencyGraph } from '../lib/graph'
+import type { TraceResult } from '../lib/trace'
 
 interface GraphCanvasProps {
   graph: DependencyGraph
   onNodeClick: NodeMouseHandler
-  selectedPath: string | null
+  changedPaths: Set<string>
+  traceResult: TraceResult | null
 }
 
 /**
@@ -35,7 +37,7 @@ export function GraphCanvas(props: GraphCanvasProps) {
   )
 }
 
-function GraphCanvasInner({ graph, onNodeClick, selectedPath }: GraphCanvasProps) {
+function GraphCanvasInner({ graph, onNodeClick, changedPaths, traceResult }: GraphCanvasProps) {
   const { fitView } = useReactFlow()
 
   const { nodes, edges } = useMemo(() => {
@@ -49,17 +51,22 @@ function GraphCanvasInner({ graph, onNodeClick, selectedPath }: GraphCanvasProps
     const layouted = layoutGraph(repoNodes, graph.edges)
     const positions = new Map(layouted.map((node) => [node.id, node.position]))
 
-    const built: Node[] = graph.nodes.map((node) => ({
+    const built: Node[] = graph.nodes.map((node) => {
+      const isChanged = changedPaths.has(node.path)
+      const isAffected = traceResult?.affected.has(node.path) ?? false
+      return {
       id: node.path,
       type: 'fileNode',
       position: positions.get(node.path) ?? { x: 0, y: 0 },
       data: {
         path: node.path,
-        state: 'untouched' as NodeState,
+        state: (isChanged ? 'changed' : isAffected ? 'affected' : 'untouched') as NodeState,
         isTest: node.isTest,
         parseFailed: node.parseFailed,
+        distance: traceResult?.distance.get(node.path),
       },
-    }))
+      }
+    })
 
     // External packages get their own column past the widest source column, so
     // they read as "leaving the graph" rather than being mixed in with real files.
@@ -87,7 +94,7 @@ function GraphCanvasInner({ graph, onNodeClick, selectedPath }: GraphCanvasProps
     )
 
     return { nodes: built, edges: builtEdges }
-  }, [graph])
+  }, [changedPaths, graph, traceResult])
 
   // `fitView` is a fresh function on every render, so depending on it directly
   // would re-run this effect each time and cancel its own animation frame before
@@ -121,17 +128,13 @@ function GraphCanvasInner({ graph, onNodeClick, selectedPath }: GraphCanvasProps
   return (
     <div className="graph-canvas">
       <ReactFlow
-        nodes={nodes.map((node) => ({
-          ...node,
-          selected: node.id === selectedPath,
-        }))}
+        nodes={nodes}
         edges={edges}
         onNodeClick={onNodeClick}
         nodeTypes={{ fileNode: FileNode }}
         defaultEdgeOptions={{ type: 'straight' }}
         minZoom={0.1}
         maxZoom={2}
-        proOptions={{ hideAttribution: true }}
       >
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#2b313b" />
         <Controls showInteractive={false} />

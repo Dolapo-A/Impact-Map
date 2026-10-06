@@ -66,11 +66,11 @@ Build mode: learn
   Commit: `Add detail panel with import chain and coverage`
 
 - [ ] **5. The expansion animation**
-  Becomes usable: Pressing Trace plays the expansion — nodes fly outward from the changed files by distance, edges draw themselves in as their targets arrive, the affected cluster lights up, untouched nodes stay dim and still. Roughly 1.5–2 seconds.
-  Why now: This is the demo beat the whole video is built around, but it is presentation over a result that is already correct by now. Animating earlier would mean animating something that still changes.
+  Becomes usable: Pressing Trace plays the expansion — affected nodes reveal at their settled positions by distance, edges draw themselves in as their targets arrive, the affected cluster lights up, untouched nodes stay dim and still. Roughly 1.5–2 seconds.
+  Why now: This is the demo beat the whole video is built around, but it is presentation over a result that is already correct by now. The physics layout explains dependency structure; the staggered reveal explains the blast radius. Animating earlier would mean animating something that still changes.
   PRD ref: `prd.md > The Core Journey` (step 5), `prd.md > Features and Behavior` (Tracing impact), `prd.md > Look and Feel` (Motion is explanation, not ornament)
   Spec ref: `spec.md > Components` (Graph Canvas), `spec.md > Look and Feel` (Motion), `spec.md > Where It Runs and How Someone Tries It` (demo video)
-  Build: Stagger node arrival by graph distance — nearest to the change first and fastest, each successive ring following with a short delay. Draw edges in as their target node arrives. Hold untouched nodes dim and static throughout. Keep the total sequence inside 1.5–2 seconds.
+  Build: Stagger node arrival at its settled force-layout position by graph distance — nearest to the change first and fastest, each successive ring following with a short delay. Draw edges in as their target node arrives. Hold untouched nodes dim and static throughout. Keep the total sequence inside 1.5–2 seconds.
   Verify (mechanical): `npm run dev` and replay the trace three times, confirming consistent ordering by distance, no overlap or flicker between arriving nodes, and untouched nodes that do not move. Then record ~10 seconds of screen capture with the devtools console visible and confirm it stays clean throughout.
   Learner check: Watch the expansion a few times. Does it read as "blast radius spreading outward," or does it just look like things moving? Is there anything it does that you would rather it did not do?
   Commit: `Animate blast radius expansion by distance`
@@ -152,3 +152,4 @@ Activity mode: [live app and editor, explicit static fallback, focused alternati
 - Slice 1 loads the Tree-sitter grammars from the local `tree-sitter-wasms` npm package instead of a CDN — the spec's open WASM-grammar risk resolved in the build's favour, with no network dependency added.
 - Slice 1 actually uses `@vscode/tree-sitter-wasm`, not `tree-sitter-wasms` — the grammars in `tree-sitter-wasms` are built at an older ABI and `web-tree-sitter@0.27` rejects them on load. `@vscode/tree-sitter-wasm` ships ABI-14 grammars, inside the 13–15 range the 0.27 runtime requires. It also has a separate TSX grammar, so `.tsx` no longer needs to share the TypeScript grammar.
 - Layout depth is computed by collapsing strongly-connected components (Tarjan) before taking the longest path, rather than by relaxing depths to a fixed point — relaxation pushed every file in a cycle one level deeper per pass and spread the graph dozens of columns wide.
+- The graph now uses `d3-force` with a fixed phyllotaxis seed instead of the layered column layout — learner feedback found the column view too simple; physics keeps connected code clustered, makes cycles visible as nearby pairs, and produces the same settled map on every reload.

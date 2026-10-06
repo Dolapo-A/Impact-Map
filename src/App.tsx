@@ -5,6 +5,7 @@ import { GraphCanvas } from './components/GraphCanvas'
 import { buildGraph, type DependencyGraph, type SourceFile } from './lib/graph'
 import { parseFile, type ImportStatement } from './lib/parser'
 import { resolveToRepoFile } from './lib/resolve'
+import { traceImpact, type TraceResult } from './lib/trace'
 
 interface RepositoryState {
   folderName: string
@@ -14,13 +15,15 @@ interface RepositoryState {
 export default function App() {
   const [repository, setRepository] = useState<RepositoryState | null>(null)
   const [reading, setReading] = useState(false)
-  const [selectedPath, setSelectedPath] = useState<string | null>(null)
+  const [changedPaths, setChangedPaths] = useState<Set<string>>(new Set())
+  const [traceResult, setTraceResult] = useState<TraceResult | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const handleFilesSelected = useCallback(async (files: SourceFile[], folderName: string) => {
     setReading(true)
     setError(null)
-    setSelectedPath(null)
+    setChangedPaths(new Set())
+    setTraceResult(null)
 
     try {
       const repoFiles = new Set(files.map((file) => file.path))
@@ -47,6 +50,23 @@ export default function App() {
     }
   }, [])
 
+  const toggleChangedPath = useCallback((path: string) => {
+    setChangedPaths((current) => {
+      const next = new Set(current)
+      if (next.has(path)) next.delete(path)
+      else next.add(path)
+      return next
+    })
+    // The result is deliberately stale after selection changes. Trace is the
+    // explicit moment the user asks to calculate a new blast radius.
+    setTraceResult(null)
+  }, [])
+
+  const handleTrace = useCallback(() => {
+    if (!repository || changedPaths.size === 0) return
+    setTraceResult(traceImpact(repository.graph, changedPaths))
+  }, [changedPaths, repository])
+
   return (
     <div className="app">
       <header className="control-strip">
@@ -56,6 +76,17 @@ export default function App() {
         </div>
 
         <FolderPicker onFilesSelected={handleFilesSelected} disabled={reading} />
+
+        {repository && !reading && (
+          <button
+            className="button button-primary"
+            type="button"
+            disabled={changedPaths.size === 0}
+            onClick={handleTrace}
+          >
+            Trace impact
+          </button>
+        )}
 
         {reading && (
           <span className="status" role="status">
@@ -81,12 +112,24 @@ export default function App() {
         </p>
       ) : null}
 
+      {repository && changedPaths.size > 0 && !traceResult && (
+        <p className="notice notice-info">
+          {changedPaths.size} file{changedPaths.size === 1 ? '' : 's'} marked. Press Trace impact to
+          map what depends on {changedPaths.size === 1 ? 'it' : 'them'}.
+        </p>
+      )}
+
+      {traceResult && traceResult.affected.size === 0 && (
+        <p className="notice notice-info">No impact found inside this repository.</p>
+      )}
+
       <main className="canvas-area">
         {repository ? (
           <GraphCanvas
             graph={repository.graph}
-            selectedPath={selectedPath}
-            onNodeClick={(_, node) => setSelectedPath(node.id)}
+            changedPaths={changedPaths}
+            traceResult={traceResult}
+            onNodeClick={(_, node) => toggleChangedPath(node.id)}
           />
         ) : (
           <div className="empty-state">
@@ -99,12 +142,6 @@ export default function App() {
         )}
       </main>
 
-      {selectedPath && (
-        <aside className="detail-placeholder">
-          <h2>{selectedPath.replace('::external', '')}</h2>
-          <p>Details arrive in a later step.</p>
-        </aside>
-      )}
     </div>
   )
 }

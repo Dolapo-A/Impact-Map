@@ -97,6 +97,11 @@
   color: #f0d08a;
 }
 
+.notice-info {
+  background: #102a43;
+  color: #b7dcff;
+}
+
 .canvas-area {
   flex: 1;
   min-height: 0;

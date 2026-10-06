@@ -422,7 +422,7 @@ You chose Tree-sitter over a regex parser knowing it compiles to WebAssembly. Th
 - **Does the test skeleton survive contact with the build?** — unresolved, and flagged for a decision during `5-build`. It was an agent decision, not the learner's. Cut it if it starts costing time; the coverage lookup alone still produces the "changed and untested" moment.
 - **Does blue read distinctly against purple when rendered?** — a visual judgment best made by looking. Escape hatch: shift "affected" toward magenta. Not blocking.
 - **What is the sample repository?** — now a build task with a hard requirement: it must contain a circular import and an affected file with no test coverage, or the product's two best states never appear in the demo.
-- **Does the physics layout prove expensive?** — new to this phase. Fallback is a deterministic layout; the feel changes, the function doesn't.
+- **Does the physics layout prove expensive?** — resolved in the build. `d3-force` settles the bundled sample graph quickly enough for an imperceptible load-time layout. It starts from a fixed phyllotaxis spiral rather than d3's random seed, so the same repository produces the same picture on every reload. There is no layout toggle in the POC.
 
 **Unresolved from this spec's self-review:**
 
