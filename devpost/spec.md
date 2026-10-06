@@ -99,7 +99,7 @@ PRD ref: `prd.md > The Core Journey`.
   Version: 8.x (requires Node 20.19+ or 22.12+).
   **Tradeoff accepted:** you run `npm run dev` and open a local URL. Not a double-clickable file. In exchange you get module loading, TypeScript support, and a working build — none of which you'd want to hand-roll.
 
-- **Tree-sitter** (`web-tree-sitter` + TypeScript/JavaScript grammar) — the parser that finds import statements.
+- **Tree-sitter** (`web-tree-sitter` + `@vscode/tree-sitter-wasm` grammars) — the parser that finds import statements.
   Runtime docs: https://tree-sitter.github.io/tree-sitter/
   Browser bindings: https://github.com/tree-sitter/tree-sitter/tree/master/lib/binding_web
   **Why you agreed to it:** a regex would miss multi-line imports and silently produce a wrong graph, which is the worst failure mode for a tool whose whole claim is verifiable evidence. Tradeoff: the parser compiles to WebAssembly — a binary format browsers run — which adds setup risk. See **Decisions and Open Issues**.
@@ -112,10 +112,15 @@ PRD ref: `prd.md > The Core Journey`.
 - **Vitest** — the test runner, matching the Vite ecosystem.
   Docs: https://vitest.dev
 
-**Unverified — check these early in the build:**
+**Verified during the build (slice 1):**
 
-- **Whether a browser/WASM build of the TypeScript grammar is available.** I confirmed `web-tree-sitter` (the browser runtime, v0.27.0) exists and is actively maintained. I did **not** confirm a precompiled browser grammar. If none is available, the fallback is loading a `.wasm` grammar file from a CDN, which adds a network dependency and an extra failure mode. **This is the single biggest technical risk in the spec. Verify it in the first build step, before anything is built on top of it.** If it fails, fall back to a regex parser that handles multi-line imports specifically — not the naive single-line kind.
-- **Whether adding a physics layout to React Flow is cheap.** If it turns out to be a large lift, the fallback is a fixed grid or tree layout. This changes the *feel* of the product but not its function.
+- **A browser/WASM TypeScript grammar is available, from npm — no CDN needed.** `web-tree-sitter@0.27` accepts grammar ABI 13–15. The `tree-sitter-wasms` package ships grammars at an older ABI and is **rejected on load**; `@vscode/tree-sitter-wasm@0.3.1` ships ABI-14 grammars and works. Grammars are served as local assets, so there is no network call at parse time. It also ships a separate TSX grammar, which `.tsx` files need — the plain TypeScript grammar misreads `<T>` generics as comparison operators. **The regex fallback was not needed.**
+- **Adding physics layout to React Flow was not attempted.** The layered deterministic layout in `src/lib/layout.ts` reads well for import graphs, because imports have a real direction and depth maps to left-to-right columns. Circular imports are collapsed into one column via Tarjan's strongly-connected components. The feel would be the only thing lost by revisiting this.
+
+**Original open risks, now resolved:**
+
+- ~~Whether a browser/WASM build of the TypeScript grammar is available.~~ Resolved — see above.
+- ~~Whether adding a physics layout to React Flow is cheap.~~ Deferred; the deterministic layout preserves every product behavior.
 
 ## Where It Runs and How Someone Tries It
 
@@ -409,7 +414,7 @@ You chose Tree-sitter over a regex parser knowing it compiles to WebAssembly. Th
 - `web-tree-sitter` — v0.27.0 confirmed on npm, actively maintained. Browser runtime exists.
 - `@xyflow/react` — v12.12.0 confirmed, MIT, requires React 17+.
 - `vite` — v8.3.3 confirmed; requires Node `^20.19.0 || >=22.12.0`.
-- `tree-sitter-typescript` — v0.23.2 confirmed, but **the npm package is Node bindings** (`bindings/node`, `node-gyp-build` install script), not a browser build. This is why the WASM grammar question remains open and is scheduled as build step one. Do not assume this package works in the browser.
+- `tree-sitter-typescript` — v0.23.2 confirmed, but **the npm package is Node bindings** (`bindings/node`, `node-gyp-build` install script), not a browser build. Confirmed in the build: it does not work in the browser. `@vscode/tree-sitter-wasm@0.3.1` is the package that does.
 - GitHub PR files endpoint confirmed at the documented path; unauthenticated rate limit documented as 60/hour.
 
 **Carried from `prd.md > Open Questions`:**

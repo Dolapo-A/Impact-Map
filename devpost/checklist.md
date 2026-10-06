@@ -25,7 +25,7 @@ Build mode: learn
 
 ## Slices
 
-- [ ] **1. Point it at a folder → the dependency graph appears**
+- [x] **1. Point it at a folder → the dependency graph appears**
   Becomes usable: You open the page, choose a repository folder, and a graph of files and import edges renders on screen. Bootstrapping is inside this slice, not a step of its own.
   Why now: Every later slice lands on top of this, and it carries the spec's biggest technical risk — the browser/WASM TypeScript grammar. Folding it in means the risk is proven by something you can look at, not by a claim.
   PRD ref: `prd.md > The Core Journey` (steps 1-2), `prd.md > Features and Behavior` (Reading the repository)
@@ -150,3 +150,5 @@ Activity mode: [live app and editor, explicit static fallback, focused alternati
      and it replaces any separate log. -->
 
 - Slice 1 loads the Tree-sitter grammars from the local `tree-sitter-wasms` npm package instead of a CDN — the spec's open WASM-grammar risk resolved in the build's favour, with no network dependency added.
+- Slice 1 actually uses `@vscode/tree-sitter-wasm`, not `tree-sitter-wasms` — the grammars in `tree-sitter-wasms` are built at an older ABI and `web-tree-sitter@0.27` rejects them on load. `@vscode/tree-sitter-wasm` ships ABI-14 grammars, inside the 13–15 range the 0.27 runtime requires. It also has a separate TSX grammar, so `.tsx` no longer needs to share the TypeScript grammar.
+- Layout depth is computed by collapsing strongly-connected components (Tarjan) before taking the longest path, rather than by relaxing depths to a fixed point — relaxation pushed every file in a cycle one level deeper per pass and spread the graph dozens of columns wide.
