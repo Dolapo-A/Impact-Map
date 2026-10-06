@@ -1,0 +1,308 @@
+/* Layout: control strip on top, canvas filling the rest, panel beside it. */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Control strip — visually subordinate to the graph, per spec.md > Look and Feel. */
+.control-strip {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.brand-mark {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--node-changed);
+  box-shadow: 0 0 0 3px var(--accent-muted);
+}
+
+.folder-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-raised);
+  color: var(--text);
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.button:hover:not(:disabled) {
+  background: #232a34;
+  border-color: #4a5260;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.button-primary {
+  background: #1f6feb;
+  border-color: #1f6feb;
+}
+
+.button-primary:hover:not(:disabled) {
+  background: #388bfd;
+  border-color: #388bfd;
+}
+
+.hint,
+.status {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.status {
+  margin-left: auto;
+  font-family: var(--mono);
+}
+
+.notice {
+  margin: 0;
+  padding: 8px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+
+.notice-error {
+  background: #3d1418;
+  color: #ffb3ae;
+}
+
+.notice-warn {
+  background: #2d2410;
+  color: #f0d08a;
+}
+
+.canvas-area {
+  flex: 1;
+  min-height: 0;
+}
+
+.graph-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 8px;
+  text-align: center;
+}
+
+.empty-title {
+  color: var(--text);
+  font-size: 16px;
+  margin: 0;
+}
+
+.empty-hint {
+  color: var(--text-muted);
+  margin: 0;
+  max-width: 460px;
+}
+
+.empty-hint code {
+  font-family: var(--mono);
+  color: var(--text-faint);
+}
+
+/* Node styling — two independent channels, per spec.md > Look and Feel. */
+.file-node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  min-width: 170px;
+  max-width: 230px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--node-untouched);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease;
+}
+
+.file-node:hover {
+  transform: translateY(-1px);
+}
+
+.file-node.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-muted);
+}
+
+.file-node-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Channel 1 — fill carries distance from the change. */
+.state-changed {
+  background: var(--node-changed);
+  border-color: #ffb163;
+  color: #1a1005;
+  font-weight: 600;
+}
+
+.state-affected {
+  background: var(--node-affected);
+  border-color: #c39bff;
+  color: #14061f;
+}
+
+.state-external {
+  background: var(--node-external);
+  border-style: dashed;
+  color: var(--text-muted);
+}
+
+.file-node-tag,
+.file-node-flag {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 4px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.file-node-tag {
+  background: #ffffff26;
+}
+
+.file-node-flag {
+  background: var(--uncovered);
+  color: #fff;
+}
+
+.file-node-distance {
+  margin-left: auto;
+  font-size: 10px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+/*
+ * Channel 2 — coverage, distinguished by shape as well as colour because blue and
+ * purple sit close on the spectrum. Uncovered = a filled red dot badge.
+ * Covered = a blue outline ring, lighter in weight than the node's own border.
+ */
+.coverage-badge {
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--uncovered);
+  flex-shrink: 0;
+}
+
+.coverage-ring {
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--covered);
+  flex-shrink: 0;
+}
+
+/* Handles must stay invisible but clickable — they are the edge anchor points. */
+.node-handle {
+  width: 6px;
+  height: 6px;
+  border: none;
+  background: var(--border-strong);
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.react-flow__node:hover .node-handle {
+  opacity: 1;
+}
+
+.edge-internal {
+  stroke: var(--border-strong);
+  stroke-width: 1.4;
+}
+
+.edge-external {
+  stroke: var(--node-external);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+}
+
+.detail-placeholder {
+  position: absolute;
+  top: 56px;
+  right: 0;
+  bottom: 0;
+  width: 320px;
+  padding: 16px;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+}
+
+.detail-placeholder h2 {
+  font-family: var(--mono);
+  font-size: 13px;
+  margin: 0 0 8px;
+  word-break: break-all;
+}
+
+.detail-placeholder p {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* React Flow chrome, tuned to the dark palette rather than defaulting to white. */
+.react-flow__controls {
+  box-shadow: none;
+  border: 1px solid var(--border);
+}
+
+.react-flow__controls-button {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  fill: var(--text);
+}
+
+.react-flow__controls-button:hover {
+  background: var(--surface-raised);
+}
+
+.react-flow__attribution {
+  display: none;
+}

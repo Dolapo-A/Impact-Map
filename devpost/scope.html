@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Impact Map — Scope</title>
+<style>
+  :root{
+    --bg:#0d1117;
+    --panel:#161b22;
+    --panel-2:#1c2129;
+    --line:#2b313b;
+    --text:#e6edf3;
+    --muted:#9198a1;
+    --accent:#58a6ff;
+    --changed:#f0883e;
+    --affected:#a371f7;
+    --tested:#3fb950;
+    --untested:#f85149;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:56px 24px 96px}
+  header{border-bottom:1px solid var(--line);padding-bottom:28px;margin-bottom:40px}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+  h1{font-size:40px;line-height:1.1;margin:0 0 14px;letter-spacing:-.02em}
+  .lede{font-size:19px;color:var(--muted);margin:0;max-width:62ch}
+  h2{font-size:22px;margin:52px 0 14px;letter-spacing:-.01em}
+  h3{font-size:16px;margin:28px 0 10px;color:var(--text)}
+  p{margin:0 0 14px;max-width:70ch}
+  .muted{color:var(--muted)}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;
+    background:var(--panel-2);padding:2px 6px;border-radius:4px;border:1px solid var(--line)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px 24px;margin:0 0 20px}
+
+  /* kernel */
+  .kernel{border-left:3px solid var(--accent);background:var(--panel);padding:22px 26px;border-radius:0 12px 12px 0}
+  .kernel p{margin:0;font-size:19px}
+
+  /* loop steps */
+  .steps{counter-reset:s;list-style:none;padding:0;margin:0}
+  .steps li{counter-increment:s;position:relative;padding:12px 0 12px 42px;border-bottom:1px solid var(--line)}
+  .steps li:last-child{border-bottom:0}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:12px;width:26px;height:26px;
+    border-radius:50%;background:var(--panel-2);border:1px solid var(--line);color:var(--accent);
+    font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center}
+  .steps strong{font-weight:600}
+
+  /* diagram */
+  .fig{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;margin:0 0 8px}
+  figcaption{color:var(--muted);font-size:13px;padding:10px 16px 14px;max-width:none}
+  .fig-scroll{overflow-x:auto}
+
+  /* reveal cards */
+  .reveals{display:grid;gap:12px}
+  details.reveal{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  details.reveal[open]{background:var(--panel-2)}
+  details.reveal>summary{cursor:pointer;padding:14px 18px;font-weight:600;font-size:15px;list-style:none;
+    display:flex;align-items:center;gap:10px}
+  details.reveal>summary::-webkit-details-marker{display:none}
+  details.reveal>summary::before{content:"+";color:var(--muted);font-weight:400;width:14px;display:inline-block}
+  details.reveal[open]>summary::before{content:"−"}
+  details.reveal>summary:hover{background:rgba(88,166,255,.06)}
+  .reveal-body{padding:0 18px 16px 42px;font-size:15px;color:var(--muted)}
+  .reveal-body p{margin:0 0 10px}
+  .reveal-body p:last-child{margin:0}
+  .reason{color:var(--muted);font-style:italic}
+
+  /* legend */
+  .legend{display:flex;flex-wrap:wrap;gap:18px;margin:0 0 16px;padding:0;list-style:none}
+  .legend li{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+  .sw{width:11px;height:11px;border-radius:50%;flex:none}
+
+  /* kernel-vs-llm */
+  table{width:100%;border-collapse:collapse;margin:0 0 8px;font-size:15px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:13px;letter-spacing:.05em;text-transform:uppercase}
+  td.win{color:var(--tested)}
+
+  .tag{display:inline-block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    padding:3px 8px;border-radius:20px;border:1px solid var(--line);color:var(--muted);background:var(--panel-2)}
+  footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+  .spacer{height:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="kicker">Devpost Learn · Build With AI: Basics · <span class="tag">Scope · draft</span></p>
+  <h1>Impact Map</h1>
+  <p class="lede">A tool that takes a pull request's changed files and shows you the blast radius — an animated, evidence-backed graph of everything those changes can reach.</p>
+</header>
+
+<h2>The Unique Kernel</h2>
+<div class="kernel">
+  <p><strong>An impact map with evidence, not a review.</strong> Every claim traces back to a real dependency edge you can click and verify. No LLM, no opinions, no "an AI thinks this might be risky." If you deleted the graph and the explanations, there'd be no tool left — because the graph <em>is</em> the product, not a view onto a model.</p>
+</div>
+
+<h2>Who It's For</h2>
+<div class="panel">
+  <p><strong>Primarily the developer who just opened their own PR.</strong> They know what they changed but not what they forgot; the question is "what else did I break?" Today they answer it by rereading the diff and guessing — or by finding out in CI, or in production.</p>
+  <p><strong>Secondarily the reviewer</strong> looking at someone else's PR, who needs to orient fast. Same map, read differently.</p>
+  <div class="spacer"></div>
+  <p class="muted"><strong>Both, deliberately.</strong> The graph view is genuinely shared — the same expansion answers "what did I forget?" and "where do I start reading?" What differs is the <em>text</em> per node, not the view. v1 builds one graph with one explanation style, leaning author-side. Reviewer-optimized annotation is later.</p>
+</div>
+
+<h2>The Core Loop</h2>
+<ol class="steps panel">
+  <li><strong>Open the tool</strong> and point it at a PR, or a set of changed files.</li>
+  <li><strong>The graph loads</strong> — the repository's dependency structure.</li>
+  <li><strong>It animates outward</strong> from the changed files: nodes expand, edges draw themselves, the affected cluster lights up while everything else stays dim.</li>
+  <li><strong>Click any node</strong> to read why it matters and whether it's covered by tests.</li>
+</ol>
+<p class="muted">You come back because it caught something you didn't think about.</p>
+
+<h2>The Shape Of It</h2>
+<figure class="fig">
+  <div class="fig-scroll">
+  <svg viewBox="0 0 1000 400" width="100%" height="400" role="img"
+       aria-label="Flow diagram: a pull request enters the analyser, which parses the dependency graph and walks outward from changed files, producing an impact map that answers two questions for the author and the reviewer.">
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" fill="#4b5563"/>
+      </marker>
+      <marker id="arrowA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" fill="#a371f7"/>
+      </marker>
+    </defs>
+
+    <!-- input -->
+    <rect x="20" y="150" width="140" height="72" rx="10" fill="#1c2129" stroke="#2b313b"/>
+    <text x="90" y="180" fill="#9198a1" font-size="12" text-anchor="middle" letter-spacing="1">INPUT</text>
+    <text x="90" y="203" fill="#e6edf3" font-size="14" text-anchor="middle">A pull request</text>
+
+    <!-- analyzer -->
+    <rect x="240" y="120" width="180" height="132" rx="10" fill="#161b22" stroke="#58a6ff"/>
+    <text x="330" y="150" fill="#58a6ff" font-size="12" text-anchor="middle" letter-spacing="1">ANALYSE</text>
+    <text x="330" y="180" fill="#e6edf3" font-size="14" text-anchor="middle">parse imports →</text>
+    <text x="330" y="201" fill="#e6edf3" font-size="14" text-anchor="middle">dependency graph</text>
+    <text x="330" y="228" fill="#9198a1" font-size="12" text-anchor="middle">deterministic, no LLM</text>
+
+    <!-- impact map -->
+    <rect x="500" y="120" width="180" height="132" rx="10" fill="#161b22" stroke="#a371f7"/>
+    <text x="590" y="150" fill="#a371f7" font-size="12" text-anchor="middle" letter-spacing="1">OUTPUT</text>
+    <text x="590" y="180" fill="#e6edf3" font-size="14" text-anchor="middle">impact map</text>
+    <text x="590" y="201" fill="#e6edf3" font-size="14" text-anchor="middle">+ why it matters</text>
+    <text x="590" y="228" fill="#9198a1" font-size="12" text-anchor="middle">+ test coverage</text>
+
+    <line x1="160" y1="186" x2="238" y2="186" stroke="#4b5563" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <line x1="420" y1="186" x2="498" y2="186" stroke="#4b5563" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+    <!-- consumers -->
+    <line x1="680" y1="160" x2="790" y2="118" stroke="#a371f7" stroke-width="1.5" marker-end="url(#arrowA)"/>
+    <line x1="680" y1="212" x2="790" y2="258" stroke="#a371f7" stroke-width="1.5" marker-end="url(#arrowA)"/>
+
+    <rect x="792" y="88" width="188" height="60" rx="10" fill="#1c2129" stroke="#2b313b"/>
+    <text x="886" y="112" fill="#e6edf3" font-size="14" text-anchor="middle">the author</text>
+    <text x="886" y="132" fill="#9198a1" font-size="12" text-anchor="middle">"what did I forget?"</text>
+
+    <rect x="792" y="230" width="188" height="60" rx="10" fill="#1c2129" stroke="#2b313b"/>
+    <text x="886" y="254" fill="#e6edf3" font-size="14" text-anchor="middle">the reviewer</text>
+    <text x="886" y="274" fill="#9198a1" font-size="12" text-anchor="middle">"where do I start?"</text>
+
+    <!-- legend -->
+    <text x="20" y="360" fill="#9198a1" font-size="12" letter-spacing="1">THE GRAPH'S ONLY COLORS</text>
+    <circle cx="230" cy="356" r="6" fill="#f0883e"/><text x="244" y="361" fill="#9198a1" font-size="13">changed</text>
+    <circle cx="330" cy="356" r="6" fill="#a371f7"/><text x="344" y="361" fill="#9198a1" font-size="13">affected</text>
+    <circle cx="430" cy="356" r="6" fill="#3b444d"/><text x="444" y="361" fill="#9198a1" font-size="13">untouched</text>
+    <circle cx="546" cy="356" r="6" fill="#3fb950"/><text x="560" y="361" fill="#9198a1" font-size="13">tested</text>
+    <circle cx="630" cy="356" r="6" fill="#f85149"/><text x="644" y="361" fill="#9198a1" font-size="13">untested</text>
+  </svg>
+  </div>
+  <figcaption>One graph, two readings. The visualisation is shared; only the emphasis per node differs between the author and the reviewer. Colour is reserved for state — never decoration.</figcaption>
+</figure>
+
+<h2>What "Working" Looks Like</h2>
+<div class="panel">
+  <p>You paste or point at a PR. The graph loads. Then it animates: nodes fly outward from the changed files, edges draw themselves in, and the affected cluster lights up while everything else stays dim. You click one node and it tells you why it matters and whether it's tested.</p>
+  <p><strong>That expansion-and-light-up is the beat the whole demo video is built around</strong> — about 45 seconds, and it sells the entire idea.</p>
+  <p class="muted">And since no LLM is involved, "working" also means the graph is genuinely correct: every edge is a real import, verifiable by clicking through to the file.</p>
+</div>
+
+<h2>Why This Matters To The Learner</h2>
+<div class="panel">
+  <p>The idea started as a response to a specific frustration: years of using version control without ever fully grasping it — <em>"over this period of time, I've not fully grasped it."</em> The tool is built to make the shape of a codebase and a change visible in a way git never was.</p>
+  <p>TypeScript was chosen deliberately as the language they most want to work in. A real stake in this build, not an implementation detail.</p>
+  <div class="spacer"></div>
+  <p class="muted"><strong>The aim beyond the demo:</strong> to be able to scope a project and write a PRD for one themselves. This project is the vehicle — scope it here, define it in <code>3-prd</code>, build against it in <code>5-build</code>, and find out whether the requirements actually held up.</p>
+</div>
+
+<h2>The POC Boundary</h2>
+<div class="panel">
+  <p><strong>In</strong></p>
+  <ul style="margin:0 0 16px;padding-left:20px;color:var(--muted)">
+    <li>Input: one pull request, or a set of changed files</li>
+    <li>Parse the JavaScript/TypeScript dependency graph — imports, exports, re-exports, cross-file references</li>
+    <li>Walk outward from the changed files to find what they reach</li>
+    <li>Detect and handle circular imports</li>
+    <li>Render as an interactive 2D graph: nodes are files, edges are imports</li>
+    <li>Animate the outward expansion and highlight affected nodes</li>
+    <li>Click a node → why it matters, and whether it's covered by tests</li>
+    <li>One small sample repository shipped with the tool, with genuinely interesting structure</li>
+    <li>Repo path is configurable, so it can be pointed at a real repository</li>
+  </ul>
+
+  <p><strong>Explicitly not in — the AI.</strong> Dependency tracing is deterministic; an LLM would be slower, non-reproducible, and capable of hallucinating the graph. Explanations in v1 are structured and templated: <em>"this function is imported by 3 files, 2 of which have tests."</em> Correct and dull — exactly the trade being made, and it <em>strengthens</em> the evidence-backed claim. A clean seam is left where an LLM explanation could slot in later, so that version isn't a rewrite.</p>
+</div>
+
+<h3>Why no LLM — the honest version</h3>
+<table>
+  <thead><tr><th>Job</th><th>Needs AI?</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>Trace dependencies</td><td class="win">No — deterministic</td><td>You parse imports and walk a graph. A script is correct every time; an LLM would hallucinate the graph.</td></tr>
+    <tr><td>Explain <em>why</em> an area matters</td><td>Yes — but later</td><td>Reading code semantically is a real LLM task. This is where the seam is left for v2.</td></tr>
+    <tr><td>Recommend regression tests</td><td>Unclear — murkiest</td><td>A judgment call, and a wrong recommendation is worse than none. Tightened down in the PRD.</td></tr>
+  </tbody>
+</table>
+
+<h2>Reveals — Now, Later, Cut</h2>
+<div class="reveals">
+
+  <details class="reveal" open>
+    <summary>Cut · 3D visualisation</summary>
+    <div class="reveal-body">
+      <p>Hierarchy is the one thing 3D does well, but the core question here is spatial-relationship, and graphs render fastest and clearest in 2D.</p>
+      <p>Force-directed layout — the algorithm that makes these readable — was designed for 2D. In 3D, nodes spread into a foggy ball with ambiguous depth and occlusion hiding half the graph.</p>
+      <p class="reason">Explainability is the differentiator, and a view where you can't see what's behind what is anti-explainable. A well-animated 2D graph is also more impressive in a demo video than a mediocre 3D one, because motion communicates and orbiting does not.</p>
+    </div>
+  </details>
+
+  <details class="reveal">
+    <summary>Cut · The AI in v1</summary>
+    <div class="reveal-body">
+      <p>The main concession to PoC scope. Explanations become structured and templated rather than generated — correct, and dull.</p>
+      <p class="reason">This strengthens rather than weakens the differentiator: "no vibes, here's the actual import graph" is a sharper claim than "an LLM told you what might break."</p>
+    </div>
+  </details>
+
+  <details class="reveal">
+    <summary>Cut · Repository-wide git activity</summary>
+    <div class="reveal-body">
+      <p>"Git activity" and "pull request analysis" were two different inputs in the original idea.</p>
+      <p class="reason">PR analysis is bounded — a known set of changed files. History mining needs a full-repo scan and a time dimension: a different product, answering a different question.</p>
+    </div>
+  </details>
+
+  <details class="reveal">
+    <summary>Cut · Monorepo &amp; multi-package support</summary>
+    <div class="reveal-body">
+      <p>Real enterprise repos bring workspaces, generated files (<code>dist/</code>, <code>*.d.ts</code>), lockfiles, and scale problems that would eat the budget.</p>
+      <p class="reason">Filtering generated files is still in scope; multi-package resolution is not.</p>
+    </div>
+  </details>
+
+  <details class="reveal">
+    <summary>Cut · Deployment</summary>
+    <div class="reveal-body">
+      <p>Optional for the hackathon.</p>
+      <p class="reason">The demo runs locally. A public URL isn't needed to satisfy the submission.</p>
+    </div>
+  </details>
+
+  <details class="reveal">
+    <summary>Later · Worth doing, not now</summary>
+    <div class="reveal-body">
+      <ul style="margin:0;padding-left:20px">
+        <li>LLM-generated explanations at the seam left above</li>
+        <li>Repository-wide history mining — hot spots, churn, who changes what</li>
+        <li>Reviewer-optimized annotations</li>
+        <li>Supporting more languages beyond JS/TS</li>
+        <li>Real GitHub API integration instead of pasted input</li>
+      </ul>
+    </div>
+  </details>
+
+</div>
+
+<footer>
+  Markdown at <code>devpost/scope.md</code> is canonical — this page is a companion for reading it faster. Nothing here needs a network connection.
+</footer>
+
+</div>
+</body>
+</html>

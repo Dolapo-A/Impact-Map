@@ -1,0 +1,28 @@
+# Personal learning context — not part of the public project
+/devpost/learner-profile.md
+
+# Local credentials
+.env
+.env.*
+!.env.example
+
+# macOS
+.DS_Store
+
+# Dependencies
+node_modules
+
+# Build output
+dist
+*.tsbuildinfo
+
+# Project-local npm cache (the global one has permission issues on this machine)
+.npm-cache
+
+# Editor / OS noise
+*.local
+
+# Agent/course tooling, not part of the project
+/.agents/
+/.claude/
+/skills-lock.json

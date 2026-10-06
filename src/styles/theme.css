@@ -1,0 +1,63 @@
+/*
+ * Palette from spec.md > Look and Feel.
+ *
+ * Two independent colour channels, and they must never be confused:
+ *   fill = how far from your change   (orange changed / purple affected / grey untouched)
+ *   ring = is it covered by tests     (blue has tests / red no tests)
+ *
+ * Blue sits close to purple on the spectrum, so the coverage channel also differs
+ * by shape — a filled badge rather than a hue swap alone.
+ */
+
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-raised: #1c2129;
+  --border: #2b313b;
+  --border-strong: #3d4451;
+  --text: #e6edf3;
+  --text-muted: #9198a1;
+  --text-faint: #6a737d;
+
+  /* Channel 1 — distance from the change */
+  --node-changed: #f0883e;
+  --node-affected: #a371f7;
+  --node-untouched: #30363d;
+  --node-external: #484f58;
+
+  /* Channel 2 — test coverage */
+  --covered: #58a6ff;
+  --uncovered: #f85149;
+
+  --accent: #58a6ff;
+  --accent-muted: #1f6feb33;
+
+  --mono: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  cursor: pointer;
+}
