@@ -35,7 +35,7 @@ Build mode: learn
   Learner check: Run `npm install && npm run dev`, open the URL, pick the `sample-repo/` folder, and look at the graph. Tell me whether it reads clearly — and whether the layout makes sense to you as a developer.
   Commit: `Scaffold app and render dependency graph from a folder`
 
-- [ ] **2. Click files to mark them changed → trace → affected files light up**
+- [x] **2. Click files to mark them changed → trace → affected files light up**
   Becomes usable: You click files in the graph to mark them as the change, press Trace, and everything those files can reach is marked as affected while everything else stays dim.
   Why now: This is the unique kernel. A graph is only a picture; a graph that answers "what did I break?" is the product. Coloring comes before animation because the result has to be correct before it's worth polishing.
   PRD ref: `prd.md > The Core Journey` (steps 3, 5), `prd.md > Features and Behavior` (Choosing what changed, Tracing impact), `prd.md > States and Boundaries` (Loaded nothing marked, Change marked before the animation, No impact found)
