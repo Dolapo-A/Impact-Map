@@ -142,6 +142,7 @@
 }
 
 .canvas-area {
+  position: relative;
   flex: 1;
   min-height: 0;
 }
@@ -259,14 +260,19 @@
 }
 
 /*
- * Channel 2 — coverage, distinguished by shape as well as colour because blue and
- * purple sit close on the spectrum. Uncovered = a filled red dot badge.
- * Covered = a blue outline ring, lighter in weight than the node's own border.
+ * Channel 2 — coverage. Distinguished by shape AND weight, not hue alone, because
+ * blue and purple sit close on the spectrum.
+ *
+ *   uncovered → a solid red disc, 9px. Heavy, impossible to miss.
+ *   covered   → a blue outline ring, 9px with a 2px stroke, open in the middle.
+ *
+ * The gap between the two is what carries the meaning at small zoom: solid vs
+ * hollow reads even when the colours do not separate cleanly.
  */
 .coverage-badge {
   margin-left: auto;
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   background: var(--uncovered);
   flex-shrink: 0;
@@ -274,11 +280,91 @@
 
 .coverage-ring {
   margin-left: auto;
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   border: 2px solid var(--covered);
   flex-shrink: 0;
+}
+
+/*
+ * The payoff state: an orange core with a red disc — "you changed this and nothing
+ * tests it". Give the badge its own contrast ring so it survives the orange fill
+ * underneath it.
+ */
+.state-changed .coverage-badge {
+  box-shadow: 0 0 0 2px #7a3d0d;
+}
+
+/* Legend — two channels with no key are unreadable. Sits bottom-left, out of the way. */
+.legend {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #161b22e6;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  backdrop-filter: blur(6px);
+}
+
+.legend-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.legend-heading {
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 10px;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.legend-swatch.changed {
+  background: var(--node-changed);
+}
+.legend-swatch.affected {
+  background: var(--node-affected);
+}
+.legend-swatch.untouched {
+  background: var(--node-untouched);
+  border: 1px solid var(--border-strong);
+}
+
+/* Mirrors the node badges exactly, so the legend teaches the real shape. */
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-dot.covered {
+  border: 2px solid var(--covered);
+}
+.legend-dot.uncovered {
+  background: var(--uncovered);
 }
 
 /* Handles must stay invisible but clickable — they are the edge anchor points. */

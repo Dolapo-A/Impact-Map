@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react'
 import { FolderPicker } from './components/FolderPicker'
 import { GraphCanvas } from './components/GraphCanvas'
 import { LayoutToggle } from './components/LayoutToggle'
+import { Legend } from './components/Legend'
 import { findCoverage, type CoverageByPath } from './lib/coverage'
 import { buildGraph, type DependencyGraph, type SourceFile } from './lib/graph'
 import type { LayoutMode } from './lib/layout'
@@ -132,14 +133,17 @@ export default function App() {
 
       <main className="canvas-area">
         {repository ? (
-          <GraphCanvas
-            graph={repository.graph}
-            coverage={repository.coverage}
-            changedPaths={changedPaths}
-            traceResult={traceResult}
-            layoutMode={layoutMode}
-            onNodeClick={(_, node) => toggleChangedPath(node.id)}
-          />
+          <>
+            <GraphCanvas
+              graph={repository.graph}
+              coverage={repository.coverage}
+              changedPaths={changedPaths}
+              traceResult={traceResult}
+              layoutMode={layoutMode}
+              onNodeClick={(_, node) => toggleChangedPath(node.id)}
+            />
+            <Legend />
+          </>
         ) : (
           <div className="empty-state">
             <p className="empty-title">Choose a repository folder to see its dependency graph.</p>

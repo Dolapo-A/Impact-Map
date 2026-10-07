@@ -89,7 +89,13 @@ function GraphCanvasInner({
           isTest: node.isTest,
           parseFailed: node.parseFailed,
           distance: traceResult?.distance.get(node.path),
-          coverage: node.isTest || coverage.has(node.path) ? 'covered' : 'uncovered',
+          // A test file needs no test of its own, and external packages are not
+          // ours to cover. Only real source files carry the coverage channel.
+          coverage: node.isTest
+            ? 'not-applicable'
+            : coverage.has(node.path)
+              ? 'covered'
+              : 'uncovered',
         },
       }
     })

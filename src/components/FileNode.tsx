@@ -4,6 +4,13 @@ import { displayPath } from '../lib/files'
 
 export type NodeState = 'changed' | 'affected' | 'untouched' | 'external'
 
+/**
+ * The second colour channel. `not-applicable` covers test files and external
+ * packages, which need no test of their own — showing them a badge would claim
+ * something about them that we cannot know.
+ */
+export type CoverageState = 'covered' | 'uncovered' | 'not-applicable'
+
 export interface FileNodeProps {
   data: {
     path: string
@@ -12,7 +19,7 @@ export interface FileNodeProps {
     /** Distance in hops from the nearest changed file. Undefined for untouched. */
     distance?: number
     parseFailed?: boolean
-    coverage?: 'covered' | 'uncovered' | 'unknown'
+    coverage?: CoverageState
   }
   selected?: boolean
 }
@@ -21,25 +28,24 @@ export interface FileNodeProps {
  * One file in the graph.
  *
  * Two independent channels, deliberately separated:
- *   fill  = distance from the change (orange / purple / grey)
- *   badge = test coverage (blue dot = has tests, red ring = nothing tests it)
+ *   fill    = distance from the change (orange / purple / grey)
+ *   badge   = test coverage (blue ring = has tests, red disc = nothing tests it)
  *
- * Coverage is a badge rather than a second fill because blue and purple are close
- * in hue. Shape and weight do the separating that hue cannot.
+ * Blue and purple sit close on the spectrum, so colour alone cannot carry the
+ * coverage channel. It differs by **shape and weight** as well:
+ *   covered   → a blue *outline* ring, open in the middle
+ *   uncovered → a red *filled* disc, heavier and unmissable
+ *
+ * That difference also survives red-green colour vision deficiency, which
+ * affects roughly 8% of men and would otherwise hide the "untested" warning.
  */
 export function FileNode({ data, selected }: FileNodeProps) {
   const label = displayPath(data.path)
-
-  const coverageClass =
-    data.coverage === 'covered'
-      ? 'covered'
-      : data.coverage === 'uncovered'
-        ? 'uncovered'
-        : 'unknown'
+  const coverage: CoverageState = data.coverage ?? 'not-applicable'
 
   return (
     <div
-      className={`file-node state-${data.state} coverage-${coverageClass}${
+      className={`file-node state-${data.state} coverage-${coverage}${
         selected ? ' is-selected' : ''
       }${data.isTest ? ' is-test' : ''}`}
       title={data.path}
@@ -59,11 +65,11 @@ export function FileNode({ data, selected }: FileNodeProps) {
         </span>
       )}
 
-      {data.coverage === 'uncovered' && (
+      {coverage === 'uncovered' && (
         <span className="coverage-badge" title="No test imports this file" />
       )}
 
-      {data.coverage === 'covered' && (
+      {coverage === 'covered' && (
         <span className="coverage-ring" title="Exercised by a test" />
       )}
 

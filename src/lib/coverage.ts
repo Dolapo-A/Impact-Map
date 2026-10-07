@@ -27,6 +27,8 @@ export function findCoverage(graph: DependencyGraph): CoverageByPath {
     .map((node) => node.path)
     .sort()
 
+  const testPathSet = new Set(testPaths)
+
   for (const testPath of testPaths) {
     const visited = new Set<string>([testPath])
     const queue = [testPath]
@@ -37,6 +39,11 @@ export function findCoverage(graph: DependencyGraph): CoverageByPath {
         if (visited.has(importedPath)) continue
         visited.add(importedPath)
         queue.push(importedPath)
+
+        // Reaching another test file is not coverage of it. A test importing a
+        // test exercises none of the source underneath, and recording the link
+        // would paint test files blue and imply they are protected by themselves.
+        if (testPathSet.has(importedPath)) continue
 
         const coveringTests = coveredBy.get(importedPath) ?? new Set<string>()
         coveringTests.add(testPath)
