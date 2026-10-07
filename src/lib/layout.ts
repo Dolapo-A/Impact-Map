@@ -1,111 +1,49 @@
 /**
- * A stable force-directed layout for the dependency map.
+ * Layout contract and dispatch.
  *
- * `d3-force` normally seeds new nodes randomly. We give every sorted path a
- * fixed phyllotaxis position before ticking a bounded simulation, so the same
- * repository always produces the same settled picture.
+ * Two algorithms, both deterministic, both user-selectable:
+ *
+ * - **Layered** (`./layered`) — files in columns by dependency depth. Position
+ *   encodes *how far a file sits from a leaf*, which makes the blast radius
+ *   legible as geometry: the affected cluster reads as a contiguous band.
+ * - **Physics** (`./physics`) — files pull together along import edges, so a
+ *   circular import becomes a visibly adjacent pair rather than an edge stub
+ *   between same-column neighbours. Honest about dependency structure, but
+ *   position no longer encodes distance from a change.
+ *
+ * Neither is strictly better; they answer different questions. That is why both
+ * ship, rather than one being chosen up front and defended.
+ *
+ * Determinism is a hard requirement (`spec.md > Data Model`): the same repository
+ * must always produce the same picture. `d3-force` seeds randomly by default, so
+ * `physics.ts` overrides its initial positions.
  */
 import type { Edge } from '@xyflow/react'
-import {
-  forceCenter,
-  forceCollide,
-  forceLink,
-  forceManyBody,
-  forceSimulation,
-  type SimulationNodeDatum,
-} from 'd3-force'
 
 import type { EdgeData } from './graph'
+import { layoutGraphLayered } from './layered'
+
+export { LAYOUT_GRID } from './layered'
+
+export type LayoutMode = 'layered' | 'physics'
+
+export const LAYOUT_MODES: LayoutMode[] = ['layered', 'physics']
+
+/** Shown in the toggle. Short, because this sits in a cramped control strip. */
+export const LAYOUT_LABELS: Record<LayoutMode, string> = {
+  layered: 'Columns',
+  physics: 'Physics',
+}
 
 export interface LaidOutNode {
   id: string
   position: { x: number; y: number }
 }
 
-interface ForceNode extends SimulationNodeDatum {
-  id: string
-}
-
-interface ForceLink {
-  source: string
-  target: string
-}
-
-const MARGIN = 40
-const EXTERNAL_GAP = 220
-const EXTERNAL_ROW_GAP = 52
-
-/** The diameter collision force maintains between file-node centres. */
-export const MIN_NODE_DISTANCE = 124
-
-/** Kept as canvas geometry for positioning package stubs beyond the map. */
-export const LAYOUT_GRID = {
-  MARGIN,
-  COLUMN_WIDTH: EXTERNAL_GAP,
-  ROW_HEIGHT: EXTERNAL_ROW_GAP,
-} as const
-
-const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5))
-
-function seededNode(id: string, index: number): ForceNode {
-  const radius = 34 * Math.sqrt(index + 1)
-  const angle = index * GOLDEN_ANGLE
-  return { id, x: Math.cos(angle) * radius, y: Math.sin(angle) * radius }
-}
-
-/**
- * Settle the graph without running a live simulation in the browser.
- *
- * The bounded ticks make this a fast, pure layout function. It clusters files
- * joined by imports, separates unrelated areas, and keeps the cycle members as
- * visibly neighbouring nodes instead of collapsing their edge into a column.
- */
-export function layoutGraph(
-  nodes: Array<{ id: string }>,
-  edges: Array<{ from: string; to: string; isExternal: boolean }>,
-): LaidOutNode[] {
-  const ids = [...nodes.map((node) => node.id)].sort()
-  if (ids.length === 0) return []
-
-  const forceNodes = ids.map(seededNode)
-  const nodeIds = new Set(ids)
-  const links: ForceLink[] = edges
-    .filter((edge) => !edge.isExternal && nodeIds.has(edge.from) && nodeIds.has(edge.to))
-    .map((edge) => ({ source: edge.from, target: edge.to }))
-    .sort((left, right) =>
-      `${left.source}\0${left.target}`.localeCompare(`${right.source}\0${right.target}`),
-    )
-
-  const simulation = forceSimulation(forceNodes)
-    .force(
-      'link',
-      forceLink<ForceNode, ForceLink>(links)
-        .id((node) => node.id)
-        .distance(180)
-        .strength(0.7),
-    )
-    .force('charge', forceManyBody().strength(-1050))
-    .force('collide', forceCollide<ForceNode>(MIN_NODE_DISTANCE / 2).iterations(2))
-    .force('center', forceCenter(0, 0))
-    .alpha(1)
-    .alphaDecay(0.028)
-    .velocityDecay(0.52)
-    .stop()
-
-  // A fixed tick count, rather than waiting for an alpha threshold, keeps output
-  // repeatable and the cost predictable for the proof of concept.
-  simulation.tick(220)
-
-  const minX = Math.min(...forceNodes.map((node) => node.x ?? 0))
-  const minY = Math.min(...forceNodes.map((node) => node.y ?? 0))
-
-  return forceNodes.map((node) => ({
-    id: node.id,
-    position: {
-      x: Math.round((node.x ?? 0) - minX + MARGIN),
-      y: Math.round((node.y ?? 0) - minY + MARGIN),
-    },
-  }))
+/** The graph shape every layout accepts. */
+export interface LayoutInput {
+  nodes: Array<{ id: string }>
+  edges: Array<{ from: string; to: string; isExternal: boolean }>
 }
 
 /** Convert a domain edge into the shape React Flow draws. */
@@ -117,4 +55,21 @@ export function toFlowEdge(edge: EdgeData, key: string): Edge {
     animated: false,
     className: edge.isExternal ? 'edge edge-external' : 'edge edge-internal',
   }
+}
+
+/**
+ * Place every node according to the chosen algorithm.
+ *
+ * Physics is imported lazily so its simulation cost is only paid when the user
+ * actually selects it. The layered path stays free for the default view.
+ */
+export async function layoutGraph(
+  mode: LayoutMode,
+  input: LayoutInput,
+): Promise<LaidOutNode[]> {
+  if (mode === 'physics') {
+    const { layoutGraphPhysics } = await import('./physics')
+    return layoutGraphPhysics(input.nodes, input.edges)
+  }
+  return layoutGraphLayered(input.nodes, input.edges)
 }

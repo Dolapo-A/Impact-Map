@@ -6,7 +6,7 @@ import { shouldIncludeFile } from '../src/lib/files.ts'
 import { parseFile, type ImportStatement } from '../src/lib/parser.ts'
 import { resolveToRepoFile } from '../src/lib/resolve.ts'
 import { buildGraph, type SourceFile } from '../src/lib/graph.ts'
-import { layoutGraph } from '../src/lib/layout.ts'
+import { layoutGraph, LAYOUT_MODES } from '../src/lib/layout.ts'
 
 /**
  * End-to-end over the real bundled sample repository: read files from disk, parse
@@ -97,13 +97,17 @@ describe('the bundled sample repository', () => {
     expect(graph.externalModules).toContain('vitest')
   })
 
-  it('produces a layout covering every file exactly once', async () => {
+  it('produces a layout covering every file exactly once, in both modes', async () => {
     const { files, graph } = await buildSampleGraph()
-    const laid = layoutGraph(
-      graph.nodes.map((n) => ({ id: n.path })),
-      graph.edges,
-    )
-    expect(laid).toHaveLength(files.length)
-    expect(new Set(laid.map((n) => n.id)).size).toBe(files.length)
+    const input = {
+      nodes: graph.nodes.map((n) => ({ id: n.path })),
+      edges: graph.edges,
+    }
+
+    for (const mode of LAYOUT_MODES) {
+      const laid = await layoutGraph(mode, input)
+      expect(laid, `mode: ${mode}`).toHaveLength(files.length)
+      expect(new Set(laid.map((n) => n.id)).size, `mode: ${mode}`).toBe(files.length)
+    }
   })
 })

@@ -2,7 +2,10 @@ import { useCallback, useState } from 'react'
 
 import { FolderPicker } from './components/FolderPicker'
 import { GraphCanvas } from './components/GraphCanvas'
+import { LayoutToggle } from './components/LayoutToggle'
+import { findCoverage, type CoverageByPath } from './lib/coverage'
 import { buildGraph, type DependencyGraph, type SourceFile } from './lib/graph'
+import type { LayoutMode } from './lib/layout'
 import { parseFile, type ImportStatement } from './lib/parser'
 import { resolveToRepoFile } from './lib/resolve'
 import { traceImpact, type TraceResult } from './lib/trace'
@@ -10,6 +13,7 @@ import { traceImpact, type TraceResult } from './lib/trace'
 interface RepositoryState {
   folderName: string
   graph: DependencyGraph
+  coverage: CoverageByPath
 }
 
 export default function App() {
@@ -17,6 +21,7 @@ export default function App() {
   const [reading, setReading] = useState(false)
   const [changedPaths, setChangedPaths] = useState<Set<string>>(new Set())
   const [traceResult, setTraceResult] = useState<TraceResult | null>(null)
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>('layered')
   const [error, setError] = useState<string | null>(null)
 
   const handleFilesSelected = useCallback(async (files: SourceFile[], folderName: string) => {
@@ -41,7 +46,7 @@ export default function App() {
         resolve: (specifier, fromPath) => resolveToRepoFile(specifier, fromPath, repoFiles),
       })
 
-      setRepository({ folderName, graph })
+      setRepository({ folderName, graph, coverage: findCoverage(graph) })
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : String(cause)
       setError(`Could not read this folder: ${message}`)
@@ -88,6 +93,8 @@ export default function App() {
           </button>
         )}
 
+        {repository && <LayoutToggle mode={layoutMode} onChange={setLayoutMode} />}
+
         {reading && (
           <span className="status" role="status">
             Reading and parsing files…
@@ -127,8 +134,10 @@ export default function App() {
         {repository ? (
           <GraphCanvas
             graph={repository.graph}
+            coverage={repository.coverage}
             changedPaths={changedPaths}
             traceResult={traceResult}
+            layoutMode={layoutMode}
             onNodeClick={(_, node) => toggleChangedPath(node.id)}
           />
         ) : (
