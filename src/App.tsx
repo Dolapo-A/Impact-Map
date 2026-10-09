@@ -11,6 +11,7 @@ import { compareWithRepository, shouldAutoMark, type MismatchOutcome } from './l
 import type { LookupFailure, PullRequestFiles } from './services/github'
 import { findCoverage, type CoverageByPath } from './lib/coverage'
 import { buildGraph, type DependencyGraph, type SourceFile } from './lib/graph'
+import { shouldIncludeFile } from './lib/files'
 import type { LayoutMode } from './lib/layout'
 import { parseFile, type ImportStatement } from './lib/parser'
 import { resolveToRepoFile } from './lib/resolve'
@@ -109,6 +110,9 @@ export default function App() {
       const outcome = compareWithRepository({
         pullRequestFiles: pullRequest.files,
         repoFiles: repository.repoFiles,
+        // A PR that also touches a README or a lockfile has not mismatched the
+        // folder — the tool simply does not graph those files.
+        isTracked: shouldIncludeFile,
       })
 
       const found = outcome.kind === 'match' ? outcome.files : outcome.kind === 'partial' ? outcome.found : []

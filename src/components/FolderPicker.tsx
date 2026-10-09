@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 
 import { shouldIncludeFile } from '../lib/files'
+import { folderNameFrom, toRepoRelativePath } from '../lib/paths'
 import type { SourceFile } from '../lib/graph'
 
 interface FolderPickerProps {
@@ -32,8 +33,12 @@ export function FolderPicker({ onFilesSelected, disabled, centred }: FolderPicke
 
     setError(null)
 
-    const folderName = picked[0].webkitRelativePath.split('/')[0] || 'repository'
-    const sources = picked.filter((file) => shouldIncludeFile(file.webkitRelativePath))
+    const folderName = folderNameFrom(picked[0].webkitRelativePath)
+    // Stored relative to the chosen folder, so paths line up with the
+    // repository-relative paths GitHub reports for a pull request.
+    const sources = picked.filter((file) =>
+      shouldIncludeFile(toRepoRelativePath(file.webkitRelativePath, folderName)),
+    )
 
     if (sources.length === 0) {
       setError('No JavaScript or TypeScript source files found in this folder.')
@@ -44,16 +49,17 @@ export function FolderPicker({ onFilesSelected, disabled, centred }: FolderPicke
     const skipped: string[] = []
 
     for (const file of sources) {
+      const path = toRepoRelativePath(file.webkitRelativePath, folderName)
       // An oversized or unreadable file must not silently vanish from the graph.
       if (file.size > MAX_FILE_BYTES) {
-        skipped.push(file.webkitRelativePath)
+        skipped.push(path)
         continue
       }
       try {
         const content = await file.text()
-        files.push({ path: file.webkitRelativePath, content })
+        files.push({ path, content })
       } catch {
-        skipped.push(file.webkitRelativePath)
+        skipped.push(path)
       }
     }
 

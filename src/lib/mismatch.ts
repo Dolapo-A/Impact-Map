@@ -25,11 +25,19 @@ export interface MismatchInput {
   pullRequestFiles: string[]
   /** Paths actually present in the chosen folder. */
   repoFiles: Iterable<string>
+  /**
+   * Decides whether a file is one the tool would ever graph. Files it ignores —
+   * `package.json`, a README, a lockfile — are not "missing", they are simply
+   * out of scope, and counting them as missing would report a mismatch on nearly
+   * every real pull request.
+   */
+  isTracked?: (path: string) => boolean
 }
 
 export function compareWithRepository({
   pullRequestFiles,
   repoFiles,
+  isTracked = () => true,
 }: MismatchInput): MismatchOutcome {
   const present = new Set(repoFiles)
 
@@ -38,9 +46,17 @@ export function compareWithRepository({
   const missing: string[] = []
 
   for (const file of [...pullRequestFiles].sort()) {
+    // Out of scope for this tool, so neither present nor absent. A PR that touches
+    // only a README has not mismatched the folder.
+    if (!isTracked(file)) continue
+
     if (present.has(file)) found.push(file)
     else missing.push(file)
   }
+
+  // No tracked files at all: the pull request changed nothing this tool graphs.
+  // That is not a mismatch, and saying so would be alarming and meaningless.
+  if (found.length === 0 && missing.length === 0) return { kind: 'match', files: [] }
 
   if (missing.length === 0) return { kind: 'match', files: found }
   if (found.length === 0) return { kind: 'none-match', missing }

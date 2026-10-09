@@ -62,6 +62,42 @@ describe('compareWithRepository', () => {
   })
 })
 
+describe('compareWithRepository — files the tool does not graph', () => {
+  const isTracked = (path: string) => /\.(ts|tsx|js|jsx)$/.test(path) && !path.endsWith('.d.ts')
+
+  it('does not call a README or a lockfile missing', () => {
+    // Nearly every real pull request touches package.json. Reporting that as a
+    // mismatch would mean almost every PR raised a false alarm.
+    const outcome = compareWithRepository({
+      pullRequestFiles: ['src/index.ts', 'package.json', 'README.md'],
+      repoFiles: ['src/index.ts', 'src/utils/cart.ts'],
+      isTracked,
+    })
+
+    expect(outcome).toEqual({ kind: 'match', files: ['src/index.ts'] })
+  })
+
+  it('treats a pull request that changed nothing tracked as a match, not a mismatch', () => {
+    const outcome = compareWithRepository({
+      pullRequestFiles: ['README.md', 'LICENSE'],
+      repoFiles: ['src/index.ts'],
+      isTracked,
+    })
+
+    expect(outcome).toEqual({ kind: 'match', files: [] })
+  })
+
+  it('still reports a genuinely absent source file', () => {
+    const outcome = compareWithRepository({
+      pullRequestFiles: ['src/index.ts', 'src/vanished.ts'],
+      repoFiles: ['src/index.ts'],
+      isTracked,
+    })
+
+    expect(outcome).toEqual({ kind: 'partial', found: ['src/index.ts'], missing: ['src/vanished.ts'] })
+  })
+})
+
 describe('shouldAutoMark', () => {
   it('auto-marks only on a clean match', () => {
     expect(shouldAutoMark({ kind: 'match', files: ['a.ts'] })).toBe(true)
