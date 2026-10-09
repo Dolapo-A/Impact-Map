@@ -79,7 +79,9 @@ export function MismatchNotice({ failure, outcome, onDismiss, onMarkFound, found
       <div className="mismatch-actions">
         {onMarkFound && found.length > 0 && (
           <button type="button" className="button" onClick={onMarkFound}>
-            Mark the {found.length} file{found.length === 1 ? '' : 's'} that are here
+            Mark the {`${found.length} file${found.length === 1 ? '' : 's'} that ${
+              found.length === 1 ? 'is' : 'are'
+            } here`}
           </button>
         )}
         <button type="button" className="button" onClick={onDismiss}>
