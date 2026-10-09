@@ -217,6 +217,38 @@
   padding: 0;
 }
 
+.action-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+}
+
+.pr-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pr-input input {
+  width: 220px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.pr-input input::placeholder {
+  color: var(--text-faint);
+}
+
+.pr-input input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 .action-count {
   display: inline-flex;
   align-items: center;
@@ -350,6 +382,59 @@
  */
 .state-changed .coverage-badge {
   box-shadow: 0 0 0 2px #7a3d0d;
+}
+
+/* Mismatch notice — a designed state, not an error toast. It names the files. */
+.notice-mismatch {
+  background: #2d2410;
+  border-bottom: 1px solid #4a3c1a;
+  color: var(--text);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.mismatch-title {
+  margin: 0;
+  font-weight: 600;
+  color: #f0d08a;
+}
+
+.mismatch-body {
+  margin: 0;
+  max-width: 620px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.mismatch-files-label {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mismatch-files {
+  margin: 0;
+  padding-left: 16px;
+  max-height: 140px;
+  overflow-y: auto;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.mismatch-files code {
+  font-family: var(--mono);
+  color: var(--text);
+}
+
+.mismatch-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
 }
 
 /* Legend — two channels with no key are unreadable. Sits bottom-left, out of the way. */

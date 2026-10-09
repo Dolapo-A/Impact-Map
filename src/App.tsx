@@ -5,6 +5,10 @@ import { GraphCanvas } from './components/GraphCanvas'
 import { DetailPanel } from './components/DetailPanel'
 import { LayoutToggle } from './components/LayoutToggle'
 import { Legend } from './components/Legend'
+import { MismatchNotice } from './components/MismatchNotice'
+import { PullRequestInput } from './components/PullRequestInput'
+import { compareWithRepository, shouldAutoMark, type MismatchOutcome } from './lib/mismatch'
+import type { LookupFailure, PullRequestFiles } from './services/github'
 import { findCoverage, type CoverageByPath } from './lib/coverage'
 import { buildGraph, type DependencyGraph, type SourceFile } from './lib/graph'
 import type { LayoutMode } from './lib/layout'
@@ -16,6 +20,15 @@ interface RepositoryState {
   folderName: string
   graph: DependencyGraph
   coverage: CoverageByPath
+  /** Every file present in the chosen folder, for the mismatch check. */
+  repoFiles: Set<string>
+}
+
+interface PullRequestState {
+  files: string[]
+  outcome: MismatchOutcome
+  /** The files that were present, kept so the notice can offer them explicitly. */
+  found: string[]
 }
 
 export default function App() {
@@ -26,6 +39,8 @@ export default function App() {
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('layered')
   const [error, setError] = useState<string | null>(null)
+  const [prFailure, setPrFailure] = useState<LookupFailure | null>(null)
+  const [prState, setPrState] = useState<PullRequestState | null>(null)
 
   const handleFilesSelected = useCallback(async (files: SourceFile[], folderName: string) => {
     setReading(true)
@@ -33,6 +48,9 @@ export default function App() {
     setChangedPaths(new Set())
     setTraceResult(null)
     setSelectedPath(null)
+    // A new folder invalidates any pull request read against the previous one.
+    setPrFailure(null)
+    setPrState(null)
 
     try {
       const repoFiles = new Set(files.map((file) => file.path))
@@ -50,7 +68,7 @@ export default function App() {
         resolve: (specifier, fromPath) => resolveToRepoFile(specifier, fromPath, repoFiles),
       })
 
-      setRepository({ folderName, graph, coverage: findCoverage(graph) })
+      setRepository({ folderName, graph, coverage: findCoverage(graph), repoFiles })
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : String(cause)
       setError(`Could not read this folder: ${message}`)
@@ -75,6 +93,52 @@ export default function App() {
     if (!repository || changedPaths.size === 0) return
     setTraceResult(traceImpact(repository.graph, changedPaths))
   }, [changedPaths, repository])
+
+  /**
+   * A pull request is only trusted when every file it names is in the chosen folder.
+   * On a clean match the files are marked; otherwise the mismatch is reported and the
+   * user decides. Marking a partial set would draw the blast radius of a change they
+   * did not make, and it would look entirely plausible.
+   */
+  const handlePullRequest = useCallback(
+    (pullRequest: PullRequestFiles) => {
+      if (!repository) return
+
+      setPrFailure(null)
+
+      const outcome = compareWithRepository({
+        pullRequestFiles: pullRequest.files,
+        repoFiles: repository.repoFiles,
+      })
+
+      const found = outcome.kind === 'match' ? outcome.files : outcome.kind === 'partial' ? outcome.found : []
+
+      if (shouldAutoMark(outcome) && outcome.kind === 'match') {
+        setPrState(null)
+        setChangedPaths(new Set(outcome.files))
+        setTraceResult(null)
+        return
+      }
+
+      setPrState({ files: pullRequest.files, outcome, found })
+    },
+    [repository],
+  )
+
+  const handlePullRequestFailure = useCallback((failure: LookupFailure) => {
+    setPrState(null)
+    setPrFailure(failure)
+  }, [])
+
+  const markPullRequestFiles = useCallback(
+    (files: string[]) => {
+      setChangedPaths(new Set(files))
+      setTraceResult(null)
+      setPrState(null)
+      setPrFailure(null)
+    },
+    [],
+  )
 
   return (
     <div className="app">
@@ -110,6 +174,22 @@ export default function App() {
           {repository.graph.parseFailures.slice(0, 4).join(', ')}
         </p>
       ) : null}
+
+      {prFailure && (
+        <MismatchNotice
+          failure={prFailure}
+          onDismiss={() => setPrFailure(null)}
+        />
+      )}
+
+      {prState && (
+        <MismatchNotice
+          outcome={prState.outcome}
+          found={prState.found}
+          onMarkFound={() => markPullRequestFiles(prState.found)}
+          onDismiss={() => setPrState(null)}
+        />
+      )}
 
       {traceResult && traceResult.affected.size === 0 && (
         <p className="notice notice-info">No impact found inside this repository.</p>
@@ -150,6 +230,12 @@ export default function App() {
                 )}
               </button>
               <LayoutToggle mode={layoutMode} onChange={setLayoutMode} />
+              <span className="action-divider" aria-hidden="true" />
+              <PullRequestInput
+                disabled={false}
+                onResolved={handlePullRequest}
+                onFailed={handlePullRequestFailure}
+              />
             </div>
 
             {selectedPath && (
