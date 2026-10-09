@@ -63,6 +63,11 @@ function GraphCanvasInner({
     void layoutGraph(layoutMode, {
       nodes: graph.nodes.map((node) => ({ id: node.path })),
       edges: graph.edges,
+      // The radial layout centres on the change, so it needs the marked files and
+      // the tracer's distances. Falling back to an empty set puts every file in a
+      // ring rather than collapsing them onto the middle.
+      changedPaths,
+      distanceByPath: traceResult?.distance ?? new Map<string, number>(),
     }).then((laid) => {
       if (cancelled) return
       setPositions(new Map(laid.map((node) => [node.id, node.position])))
@@ -70,7 +75,7 @@ function GraphCanvasInner({
     return () => {
       cancelled = true
     }
-  }, [graph, layoutMode])
+  }, [changedPaths, graph, layoutMode, traceResult])
 
   const { nodes, edges } = useMemo(() => {
     // External packages are drawn as stubs at the boundary, not as repo files.
