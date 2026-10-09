@@ -97,6 +97,35 @@ describe('the bundled sample repository', () => {
     expect(graph.externalModules).toContain('vitest')
   })
 
+  it('parses without reporting a parse failure, so the graph is complete', async () => {
+    // The tool reports parse failures by name rather than dropping files, so a
+    // clean run here means the demo graph has every node it should.
+    const { graph } = await buildSampleGraph()
+    expect(graph.parseFailures).toEqual([])
+  })
+
+  it('resolves reservations.ts to utils/cart.ts, not to a missing file', async () => {
+    // A wrong relative path is exactly the failure the tool cannot detect: it
+    // reports an unresolvable import as an external package and carries on, so the
+    // graph would look fine while quietly missing a real edge. This pins the path.
+    const { graph } = await buildSampleGraph()
+    const edges = new Set(
+      graph.edges.filter((e) => !e.isExternal).map((e) => `${e.from}->${e.to}`),
+    )
+    expect(edges.has('src/domain/reservations.ts->src/utils/cart.ts')).toBe(true)
+    expect(graph.externalModules).not.toContain('./cart')
+  })
+
+  it('treats no unresolvable relative import as external', async () => {
+    // `isExternal` means an npm package. A relative path landing there is a bug in
+    // the sample repo, not a package, and would silently corrupt the graph.
+    const { graph } = await buildSampleGraph()
+    const relativeButExternal = graph.edges.filter(
+      (edge) => edge.isExternal && edge.to.startsWith('.'),
+    )
+    expect(relativeButExternal).toEqual([])
+  })
+
   it('produces a layout covering every file exactly once, in both modes', async () => {
     const { files, graph } = await buildSampleGraph()
     const input = {

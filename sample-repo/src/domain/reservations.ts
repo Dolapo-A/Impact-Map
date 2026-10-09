@@ -1,4 +1,4 @@
-import { addDays } from './cart'
+import { addDays } from '../utils/cart'
 
 export interface Reservation {
   id: string

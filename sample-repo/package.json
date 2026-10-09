@@ -1,0 +1,19 @@
+{
+  "name": "impact-map-sample-repo",
+  "private": true,
+  "version": "0.0.0",
+  "description": "A tiny storefront codebase bundled with Impact Map as demo input. It exists to be ANALYSED, not run — see the note below.",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "typescript": "^5.9.0",
+    "vitest": "^5.0.3"
+  },
+  "dependencies": {
+    "react": "^19.2.0"
+  }
+}
