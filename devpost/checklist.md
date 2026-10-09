@@ -102,7 +102,7 @@ Build mode: learn
      At each planned checkpoint, the learner tries the app and gives feedback.
      Check a box only after the learner reports back and issues are resolved. -->
 
-- [ ] Early usable behavior explored — after slice 3, where the two color channels first render together and the blue-against-purple question can be answered by looking
+- [x] Early usable behavior explored — after slice 3, where the two color channels first render together and the blue-against-purple question can be answered by looking. *Completed in practice across slices 1–5: the learner inspected the live graph at each stage, answered the blue-vs-purple question (resolved by shape, not hue), chose Physics as the preferred layout, and reported real defects — edge/node mismatch, click semantics, copy grammar, the missing folder button — each fixed and re-verified.*
 - [ ] Final kick-the-tires exploration and feedback completed
 
 ## Final Review
