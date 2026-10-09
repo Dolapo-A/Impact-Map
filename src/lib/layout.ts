@@ -10,12 +10,8 @@
  *   circular import becomes a visibly adjacent pair rather than an edge stub
  *   between same-column neighbours. Honest about dependency structure, but
  *   position no longer encodes distance from a change.
- * - **Radial** (`./radial`) — changed files at the centre, each ring out holding
- *   the files one hop further away. Distance from the centre *is* distance from
- *   the change, and it is the only layout where slice 5's outward expansion is
- *   literal rather than a metaphor.
  *
- * None is strictly better; they answer different questions. That is why all three
+ * Neither is strictly better; they answer different questions. That is why both
  * ship, rather than one being chosen up front and defended.
  *
  * Determinism is a hard requirement (`spec.md > Data Model`): the same repository
@@ -29,15 +25,14 @@ import { layoutGraphLayered } from './layered'
 
 export { LAYOUT_GRID } from './layered'
 
-export type LayoutMode = 'layered' | 'physics' | 'radial'
+export type LayoutMode = 'layered' | 'physics'
 
-export const LAYOUT_MODES: LayoutMode[] = ['layered', 'physics', 'radial']
+export const LAYOUT_MODES: LayoutMode[] = ['layered', 'physics']
 
 /** Shown in the toggle. Short, because this sits in a cramped control strip. */
 export const LAYOUT_LABELS: Record<LayoutMode, string> = {
   layered: 'Columns',
   physics: 'Physics',
-  radial: 'Radial',
 }
 
 export interface LaidOutNode {
@@ -49,10 +44,6 @@ export interface LaidOutNode {
 export interface LayoutInput {
   nodes: Array<{ id: string }>
   edges: Array<{ from: string; to: string; isExternal: boolean }>
-  /** Files marked as changed. Only the radial layout needs these. */
-  changedPaths?: Set<string>
-  /** Hop distance from the nearest changed file. Only the radial layout needs this. */
-  distanceByPath?: Map<string, number>
 }
 
 /** Convert a domain edge into the shape React Flow draws. */
@@ -69,8 +60,8 @@ export function toFlowEdge(edge: EdgeData, key: string): Edge {
 /**
  * Place every node according to the chosen algorithm.
  *
- * Physics and radial are imported lazily so their cost is only paid when the user
- * selects them. The layered default stays free.
+ * Physics is imported lazily so its simulation cost is only paid when the user
+ * actually selects it. The layered default stays free.
  */
 export async function layoutGraph(
   mode: LayoutMode,
@@ -79,16 +70,6 @@ export async function layoutGraph(
   if (mode === 'physics') {
     const { layoutGraphPhysics } = await import('./physics')
     return layoutGraphPhysics(input.nodes, input.edges)
-  }
-
-  if (mode === 'radial') {
-    const { layoutGraphRadial } = await import('./radial')
-    return layoutGraphRadial({
-      nodes: input.nodes,
-      edges: input.edges,
-      changedPaths: input.changedPaths ?? new Set<string>(),
-      distanceByPath: input.distanceByPath ?? new Map<string, number>(),
-    })
   }
 
   return layoutGraphLayered(input.nodes, input.edges)

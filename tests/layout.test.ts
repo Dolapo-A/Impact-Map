@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest'
 import { layoutGraph, LAYOUT_LABELS, LAYOUT_MODES, type LayoutMode } from '../src/lib/layout.ts'
 import { layoutGraphLayered } from '../src/lib/layered.ts'
 import { layoutGraphPhysics } from '../src/lib/physics.ts'
-import { layoutGraphRadial } from '../src/lib/radial.ts'
 
 const nodes = (ids: string[]) => ids.map((id) => ({ id }))
 
@@ -13,8 +12,8 @@ const LINEAR: Array<{ from: string; to: string; isExternal: boolean }> = [
 ]
 
 describe('layout dispatch', () => {
-  it('offers all three layouts, and labels each one', () => {
-    expect(LAYOUT_MODES).toEqual(['layered', 'physics', 'radial'])
+  it('offers both layouts, and labels each one', () => {
+    expect(LAYOUT_MODES).toEqual(['layered', 'physics'])
     for (const mode of LAYOUT_MODES) {
       expect(LAYOUT_LABELS[mode]).toBeTruthy()
     }
@@ -29,41 +28,10 @@ describe('layout dispatch', () => {
     expect(await layoutGraph('physics', input)).toEqual(
       layoutGraphPhysics(input.nodes, input.edges),
     )
-    expect(
-      await layoutGraph('radial', {
-        ...input,
-        changedPaths: new Set(['a.ts']),
-        distanceByPath: new Map([
-          ['a.ts', 0],
-          ['b.ts', 1],
-          ['c.ts', 2],
-        ]),
-      }),
-    ).toEqual(
-      layoutGraphRadial({
-        nodes: input.nodes,
-        edges: input.edges,
-        changedPaths: new Set(['a.ts']),
-        distanceByPath: new Map([
-          ['a.ts', 0],
-          ['b.ts', 1],
-          ['c.ts', 2],
-        ]),
-      }),
-    )
   })
 
-  it('places every node in all three layouts', async () => {
-    const input = {
-      nodes: nodes(['a.ts', 'b.ts', 'c.ts']),
-      edges: LINEAR,
-      changedPaths: new Set(['a.ts']),
-      distanceByPath: new Map([
-        ['a.ts', 0],
-        ['b.ts', 1],
-        ['c.ts', 2],
-      ]),
-    }
+  it('places every node in both layouts', async () => {
+    const input = { nodes: nodes(['a.ts', 'b.ts', 'c.ts']), edges: LINEAR }
 
     for (const mode of LAYOUT_MODES) {
       const laid = await layoutGraph(mode, input)
@@ -79,16 +47,6 @@ describe('layout dispatch', () => {
       expect(await layoutGraph(mode, { nodes: [], edges: [] })).toEqual([])
     }
   })
-
-  it('works in radial mode with no change marked or distances supplied', async () => {
-    // The canvas calls this before the user marks anything, so the optional inputs
-    // must not be assumed to exist.
-    const laid = await layoutGraph('radial', {
-      nodes: nodes(['a.ts', 'b.ts', 'c.ts']),
-      edges: LINEAR,
-    })
-    expect(laid).toHaveLength(3)
-  })
 })
 
 /**
@@ -97,7 +55,7 @@ describe('layout dispatch', () => {
  * regression in the deterministic seeding — it is load-bearing, not incidental.
  */
 describe('determinism across runs', () => {
-  const modes: LayoutMode[] = ['layered', 'physics', 'radial']
+  const modes: LayoutMode[] = ['layered', 'physics']
 
   for (const mode of modes) {
     it(`${mode} layout gives identical positions on repeated runs`, async () => {
