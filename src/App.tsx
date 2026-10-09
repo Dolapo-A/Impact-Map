@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 
 import { FolderPicker } from './components/FolderPicker'
 import { GraphCanvas } from './components/GraphCanvas'
+import { DetailPanel } from './components/DetailPanel'
 import { LayoutToggle } from './components/LayoutToggle'
 import { Legend } from './components/Legend'
 import { findCoverage, type CoverageByPath } from './lib/coverage'
@@ -22,6 +23,7 @@ export default function App() {
   const [reading, setReading] = useState(false)
   const [changedPaths, setChangedPaths] = useState<Set<string>>(new Set())
   const [traceResult, setTraceResult] = useState<TraceResult | null>(null)
+  const [selectedPath, setSelectedPath] = useState<string | null>(null)
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('layered')
   const [error, setError] = useState<string | null>(null)
 
@@ -30,6 +32,7 @@ export default function App() {
     setError(null)
     setChangedPaths(new Set())
     setTraceResult(null)
+    setSelectedPath(null)
 
     try {
       const repoFiles = new Set(files.map((file) => file.path))
@@ -140,9 +143,22 @@ export default function App() {
               changedPaths={changedPaths}
               traceResult={traceResult}
               layoutMode={layoutMode}
-              onNodeClick={(_, node) => toggleChangedPath(node.id)}
+              // A click inspects. Marking is deliberate, from the panel — otherwise
+              // reading a file would silently rewrite the change being traced.
+              onNodeClick={(_, node) => setSelectedPath(node.id)}
             />
             <Legend />
+            {selectedPath && (
+              <DetailPanel
+                path={selectedPath}
+                graph={repository.graph}
+                traceResult={traceResult}
+                coverage={repository.coverage}
+                isChanged={changedPaths.has(selectedPath.replace('::external', ''))}
+                onToggleChanged={toggleChangedPath}
+                onClose={() => setSelectedPath(null)}
+              />
+            )}
           </>
         ) : (
           <div className="empty-state">
