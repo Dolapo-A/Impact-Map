@@ -297,6 +297,84 @@
 }
 
 /* Legend — two channels with no key are unreadable. Sits bottom-left, out of the way. */
+/*
+ * The expansion. Nodes fly out from the changed files, nearest ring first.
+ *
+ * The start offset is supplied per node as `--fly-dx` / `--fly-dy` (see
+ * `src/lib/motion.ts`), so the keyframes stay declarative here and the geometry
+ * stays testable there.
+ *
+ * `fill-mode: backwards` matters: without it a delayed node would sit fully
+ * visible at its final position during the delay, so every ring would appear at
+ * once and the stagger would be invisible.
+ */
+.file-node.is-arriving {
+  animation: fly-out 420ms cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
+  animation-delay: var(--fly-delay, 0ms);
+}
+
+@keyframes fly-out {
+  from {
+    opacity: 0;
+    transform: translate(var(--fly-dx), var(--fly-dy)) scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+/*
+ * Edges draw themselves in as the ring they point at arrives.
+ *
+ * The animation must target the `<path>`: React Flow puts an edge's `style` on the
+ * wrapping `<g>`, where `stroke-dashoffset` has no effect. `pathOptions.style`
+ * (see `withDrawIn`) is what lands on the path element.
+ */
+.react-flow__edge.is-drawing .react-flow__edge-path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw-in 380ms ease-out forwards;
+  animation-delay: var(--edge-delay, 0ms);
+}
+
+@keyframes draw-in {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Untouched files stay dim and static throughout — the point is that they did not move. */
+.file-node.state-untouched {
+  opacity: 0.55;
+}
+
+/*
+ * Honour a reduced-motion preference: the expansion is still shown, just without
+ * travel. Removing the animation entirely would lose the ordering that carries the
+ * meaning, so the stagger collapses to an instant appearance instead.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .file-node.is-arriving {
+    animation: appear-in 120ms linear backwards;
+    animation-delay: var(--fly-delay, 0ms);
+  }
+
+  .react-flow__edge.is-drawing .react-flow__edge-path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+
+  @keyframes appear-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
 /* Detail panel — beside the canvas, never over it. The graph keeps its space, so a
    clicked file never loses its position relative to the change. */
 .detail-panel {

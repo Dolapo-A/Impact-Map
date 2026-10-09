@@ -11,6 +11,17 @@ export type NodeState = 'changed' | 'affected' | 'untouched' | 'external'
  */
 export type CoverageState = 'covered' | 'uncovered' | 'not-applicable'
 
+/**
+ * How far this node travels in from, in pixels, and when it starts.
+ * Undefined means the node does not animate — the changed files, the untouched
+ * cluster, and anything outside a trace all stay exactly where they are.
+ */
+export interface Flight {
+  dx: number
+  dy: number
+  delayMs: number
+}
+
 export interface FileNodeProps {
   data: {
     path: string
@@ -20,6 +31,8 @@ export interface FileNodeProps {
     distance?: number
     parseFailed?: boolean
     coverage?: CoverageState
+    /** Present only while a trace is expanding outward. */
+    flight?: Flight
   }
   selected?: boolean
 }
@@ -42,12 +55,24 @@ export interface FileNodeProps {
 export function FileNode({ data, selected }: FileNodeProps) {
   const label = displayPath(data.path)
   const coverage: CoverageState = data.coverage ?? 'not-applicable'
+  const flight = data.flight
+
+  // The flight is driven by CSS custom properties rather than inline styles so the
+  // keyframes stay in the stylesheet, where the timing curve is readable.
+  const flightStyle = flight
+    ? ({
+        '--fly-dx': `${flight.dx}px`,
+        '--fly-dy': `${flight.dy}px`,
+        '--fly-delay': `${flight.delayMs}ms`,
+      } as React.CSSProperties)
+    : undefined
 
   return (
     <div
       className={`file-node state-${data.state} coverage-${coverage}${
         selected ? ' is-selected' : ''
-      }${data.isTest ? ' is-test' : ''}`}
+      }${data.isTest ? ' is-test' : ''}${flight ? ' is-arriving' : ''}`}
+      style={flightStyle}
       title={data.path}
     >
       {/* Import edges point right → left: an importer sits deeper than what it
@@ -79,4 +104,3 @@ export function FileNode({ data, selected }: FileNodeProps) {
     </div>
   )
 }
-

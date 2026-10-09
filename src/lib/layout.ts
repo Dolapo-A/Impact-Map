@@ -25,6 +25,9 @@ import { layoutGraphLayered } from './layered'
 
 export { LAYOUT_GRID } from './layered'
 
+/** Edge type name for the custom draw-in edge. Registered in `GraphCanvas`. */
+export const DRAW_IN_EDGE = 'drawIn'
+
 export type LayoutMode = 'layered' | 'physics'
 
 export const LAYOUT_MODES: LayoutMode[] = ['layered', 'physics']
@@ -52,8 +55,25 @@ export function toFlowEdge(edge: EdgeData, key: string): Edge {
     id: key,
     source: edge.from,
     target: edge.isExternal ? `${edge.to}::external` : edge.to,
+    type: DRAW_IN_EDGE,
     animated: false,
     className: edge.isExternal ? 'edge edge-external' : 'edge edge-internal',
+  }
+}
+
+/**
+ * An edge that draws itself in, delayed until the node it points at arrives.
+ *
+ * `data.delayMs` is read by `DrawInEdge` below. It cannot be done with a plain
+ * `style`: React Flow applies an edge's `style` to the wrapping `<g>`, where
+ * `stroke-dashoffset` has no effect, and its built-in `straight` renderer throws
+ * `pathOptions.style` away entirely. A small custom edge is the reliable route.
+ */
+export function withDrawIn(edge: Edge, delayMs: number): Edge {
+  return {
+    ...edge,
+    className: `${edge.className ?? ''} is-drawing`.trim(),
+    data: { ...edge.data, delayMs },
   }
 }
 
