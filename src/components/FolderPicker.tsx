@@ -6,6 +6,8 @@ import type { SourceFile } from '../lib/graph'
 interface FolderPickerProps {
   onFilesSelected: (files: SourceFile[], folderName: string) => void
   disabled: boolean
+  /** Centres the button in the empty canvas instead of placing it in a bar. */
+  centred?: boolean
 }
 
 const MAX_FILE_BYTES = 4 * 1024 * 1024
@@ -20,7 +22,7 @@ const MAX_FILE_BYTES = 4 * 1024 * 1024
  * selection the right unit: an import pointing at a file the user didn't share
  * would be indistinguishable from an import of an external package.
  */
-export function FolderPicker({ onFilesSelected, disabled }: FolderPickerProps) {
+export function FolderPicker({ onFilesSelected, disabled, centred }: FolderPickerProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -74,7 +76,7 @@ export function FolderPicker({ onFilesSelected, disabled }: FolderPickerProps) {
   }
 
   return (
-    <div className="folder-picker">
+    <div className={`folder-picker${centred ? ' is-centred' : ''}`}>
       <input
         ref={inputRef}
         type="file"
@@ -93,9 +95,9 @@ export function FolderPicker({ onFilesSelected, disabled }: FolderPickerProps) {
       >
         Choose repository folder
       </button>
-      <span className="hint">
-        Needs Chrome, Edge, Brave, or Arc. Your code stays on this machine.
-      </span>
+      {!centred && (
+        <span className="hint">Needs Chrome, Edge, Brave, or Arc. Your code stays on this machine.</span>
+      )}
       {error && <p className="notice notice-error">{error}</p>}
     </div>
   )

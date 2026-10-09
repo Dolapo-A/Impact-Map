@@ -87,7 +87,7 @@
   gap: 2px;
   padding: 2px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 999px;
   background: var(--bg);
 }
 
@@ -158,20 +158,76 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  gap: 8px;
+  gap: 18px;
   text-align: center;
+  padding: 24px;
 }
 
-.empty-title {
-  color: var(--text);
-  font-size: 16px;
-  margin: 0;
+/* The one call to action, centred where the graph will appear. */
+.folder-picker.is-centred {
+  flex-direction: column;
+  gap: 12px;
+}
+
+.folder-picker.is-centred .button {
+  padding: 11px 22px;
+  font-size: 15px;
 }
 
 .empty-hint {
   color: var(--text-muted);
   margin: 0;
-  max-width: 460px;
+  max-width: 440px;
+  line-height: 1.6;
+}
+
+/*
+ * Bottom-centre action pill. Holds the two things the user acts on — trace and
+ * layout — and nothing else, so the graph keeps the screen. It lifts above the
+ * legend so the two never overlap.
+ */
+.action-dock {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: #161b22f2;
+  box-shadow: 0 8px 28px #00000066;
+  backdrop-filter: blur(8px);
+}
+
+.action-dock .button {
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 15px;
+}
+
+.action-dock .layout-toggle {
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.action-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #ffffff26;
+  font-size: 10px;
+  font-weight: 600;
 }
 
 .empty-hint code {
@@ -574,7 +630,7 @@
 .legend {
   position: absolute;
   left: 16px;
-  bottom: 16px;
+  bottom: 22px;
   z-index: 5;
   display: flex;
   flex-direction: column;

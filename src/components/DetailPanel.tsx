@@ -11,6 +11,8 @@ interface DetailPanelProps {
   traceResult: TraceResult | null
   coverage: CoverageByPath
   isChanged: boolean
+  /** How many files are currently marked, so the copy can speak in numbers. */
+  changedCount: number
   onToggleChanged: (path: string) => void
   onClose: () => void
 }
@@ -80,6 +82,7 @@ export function DetailPanel({
   traceResult,
   coverage,
   isChanged,
+  changedCount,
   onToggleChanged,
   onClose,
 }: DetailPanelProps) {
@@ -99,27 +102,32 @@ export function DetailPanel({
       </header>
 
       {!isExternal && (
-        // Clicking a node inspects it; marking it as changed is a separate,
-        // deliberate action. Inspecting must never commit you to a trace, or you
-        // cannot look at a file without silently rewriting your change.
+        // Clicking a node only *reads* it. Marking is a separate, explicit step,
+        // and the label says which files that currently affects — otherwise the
+        // button looks like it describes the file rather than your change set.
         <button
           type="button"
           className={`detail-mark${isChanged ? ' is-changed' : ''}`}
           onClick={() => onToggleChanged(cleanPath)}
         >
-          {isChanged ? 'Marked as changed' : 'Mark as changed'}
+          {isChanged
+            ? 'This is your change · click to remove'
+            : 'Add to the files I changed'}
         </button>
       )}
 
       {section.kind === 'not-traced' && (
         <p className="detail-summary">
-          Mark a change and press Trace impact to see what this file reaches.
+          {changedCount === 0
+            ? 'Use “Add to the files I changed” to start a trace from this file.'
+            : `You have marked ${changedCount} file${changedCount === 1 ? '' : 's'}. Press Trace impact to see what they reach.`}
         </p>
       )}
 
       {section.kind === 'changed' && (
         <p className="detail-summary">
-          You marked this file as changed. Everything else that depends on it is affected.
+          This file is one of the {changedCount} you marked as changed. Everything that
+          depends on it is what the trace looks for.
         </p>
       )}
 

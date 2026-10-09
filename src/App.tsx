@@ -84,20 +84,8 @@ export default function App() {
           Impact Map
         </div>
 
-        <FolderPicker onFilesSelected={handleFilesSelected} disabled={reading} />
-
-        {repository && !reading && (
-          <button
-            className="button button-primary"
-            type="button"
-            disabled={changedPaths.size === 0}
-            onClick={handleTrace}
-          >
-            Trace impact
-          </button>
-        )}
-
-        {repository && <LayoutToggle mode={layoutMode} onChange={setLayoutMode} />}
+        {/* Folder choice moves to the centre of the empty canvas — see EmptyState.
+            Trace and layout move to a pill at the bottom. */}
 
         {reading && (
           <span className="status" role="status">
@@ -123,13 +111,6 @@ export default function App() {
         </p>
       ) : null}
 
-      {repository && changedPaths.size > 0 && !traceResult && (
-        <p className="notice notice-info">
-          {changedPaths.size} file{changedPaths.size === 1 ? '' : 's'} marked. Press Trace impact to
-          map what depends on {changedPaths.size === 1 ? 'it' : 'them'}.
-        </p>
-      )}
-
       {traceResult && traceResult.affected.size === 0 && (
         <p className="notice notice-info">No impact found inside this repository.</p>
       )}
@@ -148,6 +129,29 @@ export default function App() {
               onNodeClick={(_, node) => setSelectedPath(node.id)}
             />
             <Legend />
+
+            {/* Bottom-centre pill: the two things you act on, kept clear of the
+                graph so nothing competes with it. */}
+            <div className="action-dock">
+              <button
+                className="button button-primary"
+                type="button"
+                disabled={changedPaths.size === 0}
+                onClick={handleTrace}
+                title={
+                  changedPaths.size === 0
+                    ? 'Mark at least one file as changed first'
+                    : `Trace from ${changedPaths.size} marked file${changedPaths.size === 1 ? '' : 's'}`
+                }
+              >
+                Trace impact
+                {changedPaths.size > 0 && (
+                  <span className="action-count">{changedPaths.size}</span>
+                )}
+              </button>
+              <LayoutToggle mode={layoutMode} onChange={setLayoutMode} />
+            </div>
+
             {selectedPath && (
               <DetailPanel
                 path={selectedPath}
@@ -155,6 +159,7 @@ export default function App() {
                 traceResult={traceResult}
                 coverage={repository.coverage}
                 isChanged={changedPaths.has(selectedPath.replace('::external', ''))}
+                changedCount={changedPaths.size}
                 onToggleChanged={toggleChangedPath}
                 onClose={() => setSelectedPath(null)}
               />
@@ -162,10 +167,16 @@ export default function App() {
           </>
         ) : (
           <div className="empty-state">
-            <p className="empty-title">Choose a repository folder to see its dependency graph.</p>
+            {/* The one call to action, centred where the graph will appear. */}
+            <FolderPicker
+              onFilesSelected={handleFilesSelected}
+              disabled={reading}
+              centred
+            />
             <p className="empty-hint">
               Files become nodes, imports become edges. Pick the bundled{' '}
-              <code>sample-repo/</code> folder to try it.
+              <code>sample-repo/</code> folder to try it. Nothing is uploaded — your code
+              stays on this machine.
             </p>
           </div>
         )}
