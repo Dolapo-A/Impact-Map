@@ -152,8 +152,16 @@ export default function App() {
           Impact Map
         </div>
 
-        {/* Folder choice moves to the centre of the empty canvas — see EmptyState.
-            Trace and layout move to a pill at the bottom. */}
+        {/* Once a repository is loaded, the picker moves up here. Without it the
+            user has no way to choose a different folder and must refresh the page —
+            the button disappearing after its first use was a real dead end. */}
+        {repository && (
+          <FolderPicker
+            onFilesSelected={handleFilesSelected}
+            disabled={reading}
+            showHint={false}
+          />
+        )}
 
         {reading && (
           <span className="status" role="status">

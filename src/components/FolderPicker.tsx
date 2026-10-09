@@ -9,6 +9,12 @@ interface FolderPickerProps {
   disabled: boolean
   /** Centres the button in the empty canvas instead of placing it in a bar. */
   centred?: boolean
+  /**
+   * Shows the browser hint beside the button. True on first contact, where the
+   * user needs to know the tool wants a whole folder and only some browsers can
+   * give one. False in the nav bar, where repeating it on every load is noise.
+   */
+  showHint?: boolean
 }
 
 const MAX_FILE_BYTES = 4 * 1024 * 1024
@@ -23,7 +29,7 @@ const MAX_FILE_BYTES = 4 * 1024 * 1024
  * selection the right unit: an import pointing at a file the user didn't share
  * would be indistinguishable from an import of an external package.
  */
-export function FolderPicker({ onFilesSelected, disabled, centred }: FolderPickerProps) {
+export function FolderPicker({ onFilesSelected, disabled, centred, showHint = true }: FolderPickerProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -101,7 +107,7 @@ export function FolderPicker({ onFilesSelected, disabled, centred }: FolderPicke
       >
         Choose repository folder
       </button>
-      {!centred && (
+      {showHint && !centred && (
         <span className="hint">Needs Chrome, Edge, Brave, or Arc. Your code stays on this machine.</span>
       )}
       {error && <p className="notice notice-error">{error}</p>}

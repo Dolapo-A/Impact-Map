@@ -228,11 +228,11 @@ Talks to: **Graph Builder**, **Graph Canvas**, **Detail Panel**, **Test Skeleton
 PRD ref: `prd.md > Test coverage`.
 Deterministic. Makes no judgment about which tests ought to exist.
 
-### Test Skeleton Builder *(candidate — see Open Questions)*
-For an affected file with no test coverage, reports what a test for it would need to touch: exported functions, their parameter shapes, and what a test file would need to import.
+### Test Skeleton Builder *(CUT — see Decisions and Open Issues)*
+For an affected file with no test coverage, would have reported what a test for it would need to touch: exported functions, their parameter shapes, and what a test file would need to import.
 Talks to: **Test Coverage Detector**, **Detail Panel**.
 PRD ref: `prd.md > Test coverage`.
-This component was an **agent decision, not the learner's**. It is the most likely thing to run over budget and is the first candidate for cutting.
+**Cut before implementation, on the learner's decision in `5-build`.** It was an agent decision in `3-prd`, not the learner's, and was flagged from the start as the first candidate for cutting. Never built, so nothing was removed; `src/lib/skeleton.ts` was never created.
 
 ### Graph Canvas
 Renders nodes and edges with React Flow. Handles pan, zoom, and node click. Runs the expansion animation, staggered by distance from the change. Reads its data from the Graph Builder and Tracer.
@@ -312,7 +312,7 @@ impact-map/
 │   │   ├── graph.ts              # build nodes + edges from files and imports
 │   │   ├── trace.ts              # outward walk, cycle-safe, records distance + path
 │   │   ├── coverage.ts           # which test files exercise a given file
-│   │   └── skeleton.ts           # test skeleton  [candidate — may be cut]
+│   │   └── skeleton.ts           # test skeleton  [CUT in 5-build — never created]
 │   │
 │   ├── components/
 │   │   ├── FolderPicker.tsx      # directory selection
@@ -419,7 +419,7 @@ You chose Tree-sitter over a regex parser knowing it compiles to WebAssembly. Th
 
 **Carried from `prd.md > Open Questions`:**
 
-- **Does the test skeleton survive contact with the build?** — unresolved, and flagged for a decision during `5-build`. It was an agent decision, not the learner's. Cut it if it starts costing time; the coverage lookup alone still produces the "changed and untested" moment.
+- **Does the test skeleton survive contact with the build?** — **Resolved in `5-build`: cut before implementation, on the learner's decision.** It was an agent decision, not the learner's, and was flagged as the first candidate for cutting. It never reached the build, so the coverage lookup alone carries the "changed and untested" moment, which is verified live against a real pull request.
 - **Does blue read distinctly against purple when rendered?** — a visual judgment best made by looking. Escape hatch: shift "affected" toward magenta. Not blocking.
 - **What is the sample repository?** — now a build task with a hard requirement: it must contain a circular import and an affected file with no test coverage, or the product's two best states never appear in the demo.
 - **Does the physics layout prove expensive?** — resolved in the build. `d3-force` settles the bundled sample graph quickly enough for an imperceptible load-time layout. It starts from a fixed phyllotaxis spiral rather than d3's random seed, so the same repository produces the same picture on every reload. There is no layout toggle in the POC.

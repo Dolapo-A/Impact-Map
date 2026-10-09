@@ -80,6 +80,12 @@
   font-family: var(--mono);
 }
 
+/* Compact form when the picker sits in the nav bar after a folder is loaded. */
+.control-strip .folder-picker .button {
+  padding: 5px 11px;
+  font-size: 12px;
+}
+
 /* Layout toggle — two mutually exclusive options, so radio-style, not a switch. */
 .layout-toggle {
   display: flex;

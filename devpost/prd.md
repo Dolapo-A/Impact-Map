@@ -195,6 +195,6 @@ The tool does **not** claim to know which tests are important or ought to be wri
 
 ## Open Questions
 
-- **Does the test skeleton survive contact with the build?** It was the agent's call, not the learner's, and it's the most likely thing to prove expensive. If it starts costing time, cut it — the coverage *lookup* alone still produces the "changed and untested" moment that makes the product work. Must be decided during `5-build`, not here.
+- **Does the test skeleton survive contact with the build?** **Resolved in `5-build`: cut before implementation, on the learner's decision.** It never reached the build, so it never had to be defended. The coverage *lookup* alone produces the "changed and untested" moment that makes the product work, and that is verified live against a real pull request. Recommending which tests to write stays deferred from the POC, as it always was.
 - **Does blue read distinctly against purple once rendered?** The ring treatment is supposed to separate them by more than hue, but that's a visual judgment best made by looking. If it reads muddy, shifting "affected" toward magenta frees blue cleanly. Resolve during the build; not blocking for `4-spec`.
 - **What is the sample repository?** It needs structure interesting enough to make the animation worth watching, and it must contain both circular imports and an untested file, or the tool's best states never appear in the demo. A design task for the build, not a product question.
