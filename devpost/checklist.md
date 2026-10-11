@@ -93,6 +93,9 @@ Build mode: learn
 <!-- No target slice count. Each slice leaves the project working and committed, and the
      unique kernel appears early rather than last. -->
 
+- **Pre-ship review found and fixed three things.** (1) The tracer — the kernel — had only two tests; it now has seventeen, covering deep chains, the union of blast radii across several changed files, never marking a changed file as affected, degenerate input, and determinism. Writing them immediately caught a fixture written backwards: edges run importer → imported, so the chains had to be reversed. (2) The README described roughly half the product, omitting the tracer, coverage, the animation, and the entire pull request feature; rewritten from the built code. (3) **Two source files contained literal NUL bytes** — `graph.ts` since slice 1, `physics.ts` since it was written — used as dedupe-key separators. They compiled fine, but `file` reported them as binary and `grep` answered "Binary file matches", making them effectively unsearchable for a reviewer. Both now use the `\0` escape, which is the same runtime value in plain ASCII source.
+- A false alarm worth recording: the review briefly reported "0 edges in the production build" and went looking for a serious defect. The page state had not settled; a clean rebuild and reload showed 29 edges. The production build was sound throughout, and it had been verified in a browser rather than assumed from the dev server.
+
 ## Hands-on Checkpoints
 
 <!-- Plan early feedback where it can shape the remaining build and a final review.
