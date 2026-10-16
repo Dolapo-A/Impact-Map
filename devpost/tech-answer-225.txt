@@ -1,0 +1,1 @@
+Built with an AI agent: I wrote the scope, PRD, spec, and build checklist, and it built the app slice by slice. Flipped interaction, I drove the decisions. No LLM in the product, so every edge is a real import you can check.
