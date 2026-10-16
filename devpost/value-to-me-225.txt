@@ -1,0 +1,1 @@
+I built it to hold the git model in my head, to learn to plan before building, and to stop trusting what an agent tells me without running it. Not a daily tool yet, but every edge is real.
