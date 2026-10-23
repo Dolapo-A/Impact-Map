@@ -1,0 +1,772 @@
+/*
+ * The landing page.
+ *
+ * The graph is not a picture inside the page: it is the ground the page sits on.
+ * The words are an annotation on top of a live picture of the thing itself.
+ */
+
+.hero {
+  min-height: 100%;
+  background: var(--bg);
+}
+
+/* ---------------------------------------------------------------------------
+   The stage — the first screen
+   --------------------------------------------------------------------------- */
+
+.hero-stage {
+  position: relative;
+  overflow: hidden;
+  min-height: min(720px, calc(100vh - 110px));
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * The graph field.
+ *
+ * It runs down the right of the stage and bleeds off the edge, so the picture is
+ * a map the page sits inside rather than an illustration the page points at.
+ */
+.hero-field {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 58%;
+  z-index: 0;
+  pointer-events: auto;
+}
+
+.preview {
+  width: 100%;
+  height: 100%;
+  display: block;
+  transition: opacity 400ms ease;
+}
+
+.preview.is-settling {
+  opacity: 0;
+}
+
+.hero-masthead {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px 32px;
+}
+
+.hero-masthead-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.hero-header-link {
+  color: var(--text-muted);
+  font-size: 14px;
+  text-decoration: none;
+  padding: 5px 2px;
+  transition: color 120ms ease;
+}
+
+.hero-header-link:hover {
+  color: var(--text);
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 620px;
+  padding: 24px 32px 72px;
+}
+
+.hero-copy h1 {
+  margin: 0 0 24px;
+  font-size: clamp(38px, 4.9vw, 72px);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  font-weight: 640;
+  text-wrap: balance;
+}
+
+.hero-lede {
+  margin: 0 0 34px;
+  max-width: 48ch;
+  font-size: 19px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.hero-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.hero-note {
+  margin: 0;
+  max-width: 44ch;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-faint);
+}
+
+/* The one call to action, in its working form. */
+.folder-picker.is-hero {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.folder-picker.is-hero .folder-picker-button {
+  padding: 14px 26px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 10px;
+  background: var(--accent);
+  border-color: var(--accent-strong);
+  color: var(--accent-text);
+}
+
+.folder-picker.is-hero .folder-picker-button:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent);
+}
+
+/* ---------------------------------------------------------------------------
+   Sections
+   --------------------------------------------------------------------------- */
+
+.hero-section {
+  position: relative;
+  z-index: 1;
+  padding: 76px 32px;
+}
+
+.hero-section-alt {
+  background: var(--surface);
+}
+
+.hero-section h2 {
+  margin: 0 0 30px;
+  font-size: clamp(26px, 2.6vw, 36px);
+  line-height: 1.15;
+  letter-spacing: -0.028em;
+  font-weight: 620;
+  text-wrap: balance;
+}
+
+/*
+ * The three steps, drawn as a run rather than as three boxes.
+ *
+ * A row of equal cards is the lazy container for a sequence, and it says
+ * nothing. A rail with three points on it says "these happen in this order",
+ * which is the thing the reader needs to know.
+ */
+.hero-flow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hero-flow li {
+  position: relative;
+  padding-top: 30px;
+}
+
+.hero-flow li::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.hero-flow li::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 18px;
+  right: -40px;
+  height: 2px;
+  background: var(--border);
+}
+
+.hero-flow li:last-child::after {
+  display: none;
+}
+
+.hero-flow h3 {
+  margin: 0 0 10px;
+  font-size: 19px;
+  font-weight: 620;
+  letter-spacing: -0.015em;
+}
+
+.hero-flow p {
+  margin: 0;
+  max-width: 38ch;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* ---------------------------------------------------------------------------
+   Reading the graph
+   --------------------------------------------------------------------------- */
+
+.hero-read {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 600px);
+  gap: 48px;
+  align-items: center;
+}
+
+.hero-read-below {
+  margin-top: 48px;
+  align-items: start;
+}
+
+.hero-read-text p {
+  margin: 0 0 20px;
+  max-width: 78ch;
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--text-muted);
+}
+
+.hero-read-text p:last-child {
+  margin-bottom: 0;
+}
+
+/*
+ * A crop of the tool's own interface.
+ *
+ * The file cards are the product's own component at its own size, and the
+ * canvas around them is the product's own canvas. Nothing here is a picture of
+ * the product.
+ */
+.hero-fragment {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 620px;
+}
+
+/*
+ * The crop's frame.
+ *
+ * The cards inside are a fixed size, so on a narrow screen the whole crop is
+ * scaled down rather than allowed to run off the edge. The frame keeps the
+ * space the scaled crop actually takes, so the layout below it knows about it.
+ */
+.hero-fragment-canvas-frame {
+  --scale: 1;
+  position: relative;
+  overflow: hidden;
+  width: calc(var(--canvas-w) * var(--scale));
+  height: calc(var(--canvas-h) * var(--scale));
+}
+
+.hero-fragment-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--canvas-w);
+  height: var(--canvas-h);
+  border-radius: var(--radius);
+  background-color: var(--surface-sunken);
+  transform: scale(var(--scale));
+  transform-origin: top left;
+}
+
+/*
+ * The canvas's own dots, drawn as a mask so the colour comes from the theme
+ * rather than being baked into the picture.
+ */
+.hero-fragment-canvas::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-color: var(--canvas-dot);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='1.5' cy='1.5' r='1.5' fill='black'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='1.5' cy='1.5' r='1.5' fill='black'/%3E%3C/svg%3E");
+  -webkit-mask-size: 24px 24px;
+  mask-size: 24px 24px;
+}
+
+.hero-fragment-edges {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-fragment-edges line {
+  stroke: var(--edge);
+  stroke-width: 1.4;
+}
+
+.hero-fragment-node {
+  position: absolute;
+}
+
+/* The key, on its own, inside the crop. */
+[data-ui] .legend.is-inline {
+  flex-direction: row;
+  gap: 28px;
+  padding: 0;
+}
+
+/* The panel crop: the product's own panel, with room for the chain to read. */
+[data-ui] .detail-panel {
+  flex: none;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* The refusal crop: the product's own notice, at the width it really spans. */
+.hero-fragment-wide {
+  width: 100%;
+}
+
+[data-ui] .notice-mismatch {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* ---------------------------------------------------------------------------
+   The payoff, and the two refusals
+   --------------------------------------------------------------------------- */
+
+.hero-payoff {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  padding: 32px 36px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+
+.hero-payoff p {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--text-muted);
+}
+
+.hero-refusals {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 48px;
+  margin-top: 56px;
+}
+
+.hero-refusals h3 {
+  margin: 0 0 12px;
+  font-size: 19px;
+  font-weight: 620;
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+}
+
+.hero-refusals p {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 16px;
+  line-height: 1.68;
+  color: var(--text-muted);
+}
+
+/* ---------------------------------------------------------------------------
+   Footer
+   --------------------------------------------------------------------------- */
+
+.hero-footer {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 48px;
+  align-items: center;
+  padding: 72px 32px 88px;
+  background: var(--surface);
+}
+
+.hero-footer h2 {
+  margin: 0 0 14px;
+  font-size: clamp(24px, 2.2vw, 32px);
+  letter-spacing: -0.025em;
+  font-weight: 620;
+}
+
+.hero-footer-copy > p {
+  margin: 0;
+  max-width: 50ch;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--text-muted);
+}
+
+.hero-code {
+  margin: 22px 0 16px;
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  background: var(--bg);
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--text);
+  overflow-x: auto;
+}
+
+.hero-footer-action {
+  justify-self: end;
+}
+
+/* ---------------------------------------------------------------------------
+   The preview
+   --------------------------------------------------------------------------- */
+
+.preview-card {
+  fill: var(--node-untouched);
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.preview-node-changed .preview-card {
+  fill: var(--node-changed);
+  stroke: var(--node-changed-border);
+}
+
+.preview-node-affected .preview-card {
+  fill: var(--node-affected);
+  stroke: var(--node-affected-border);
+}
+
+.preview-node-untouched .preview-card {
+  opacity: 0.62;
+}
+
+.preview-name {
+  fill: var(--node-untouched-text);
+  /* A file name is an identifier, and the product sets identifiers in monospace
+     everywhere. */
+  font-family: var(--mono); /* taste-skill-ignore */
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.preview-folder {
+  fill: var(--node-untouched-folder);
+  font-family: var(--sans);
+  font-size: 10.5px;
+}
+
+.preview-node-changed .preview-name {
+  fill: var(--node-changed-text);
+}
+
+.preview-node-changed .preview-folder {
+  fill: var(--node-changed-folder);
+}
+
+.preview-node-affected .preview-name {
+  fill: var(--node-affected-text);
+}
+
+.preview-node-affected .preview-folder {
+  fill: var(--node-affected-folder);
+}
+
+.preview-badge-covered {
+  fill: none;
+  stroke: var(--covered);
+  stroke-width: 2;
+}
+
+.preview-badge-uncovered {
+  fill: var(--uncovered);
+}
+
+.preview-edge {
+  fill: none;
+  stroke: var(--edge);
+  stroke-width: 1.4;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: preview-draw 5.4s var(--edge-delay) infinite both;
+  transition: opacity 240ms ease, stroke 240ms ease;
+}
+
+.preview-edge.is-lit {
+  stroke: var(--edge-lit);
+  stroke-width: 2;
+  opacity: 1;
+}
+
+.preview-edge.is-dimmed {
+  opacity: 0.16;
+}
+
+@keyframes preview-draw {
+  0% {
+    opacity: 0;
+    stroke-dashoffset: 1;
+  }
+  12% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  86% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  96% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+  100% {
+    opacity: 0;
+    stroke-dashoffset: 1;
+  }
+}
+
+/*
+ * The expansion, on the tool's own rules: a file starts part of the way back
+ * towards the change and flies out from it, nearest ring first.
+ */
+.preview-node {
+  animation: preview-flight 5.4s var(--fly-delay) infinite both;
+  transition: opacity 240ms ease;
+}
+
+.preview-node.is-dimmed {
+  opacity: 0.24;
+}
+
+@keyframes preview-flight {
+  0% {
+    opacity: 0;
+    transform: translate(var(--fly-dx), var(--fly-dy));
+  }
+  16% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+  86% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+  96% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--fly-dx), var(--fly-dy));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preview-node,
+  .preview-edge {
+    animation: none;
+  }
+
+  .preview-node {
+    opacity: 1;
+    transform: none;
+  }
+
+  .preview-edge {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+
+  .preview.is-settling {
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Arrival
+   --------------------------------------------------------------------------- */
+
+/*
+ * The parts of a section arrive in order rather than the block fading in at
+ * once. The hidden state is written only under `[data-js]`, so a page whose
+ * script never runs shows everything, plainly.
+ */
+html[data-js] .reveal > * {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 520ms ease,
+    transform 520ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+html[data-js] .reveal[data-revealed='true'] > * {
+  opacity: 1;
+  transform: none;
+}
+
+html[data-js] .reveal[data-revealed='true'] > *:nth-child(2) {
+  transition-delay: 70ms;
+}
+
+html[data-js] .reveal[data-revealed='true'] > *:nth-child(3) {
+  transition-delay: 140ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-js] .reveal > * {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Narrow screens
+   --------------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .hero-stage {
+    min-height: 0;
+  }
+
+  .hero-field {
+    position: static;
+    width: 100%;
+    height: 340px;
+    order: 3;
+  }
+
+  .hero-masthead {
+    padding: 16px 20px;
+  }
+
+  .hero-copy {
+    padding: 16px 20px 48px;
+    max-width: none;
+  }
+
+  .hero-lede {
+    font-size: 18px;
+  }
+
+  .hero-section,
+  .hero-footer {
+    padding: 72px 20px;
+  }
+
+  .hero-flow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 36px;
+  }
+
+  /* Three steps in two columns: the last one takes the whole width rather than
+     leaving half the row empty. */
+  .hero-flow li:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .hero-flow li::after {
+    display: none;
+  }
+
+  .hero-read,
+  .hero-refusals {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 36px;
+  }
+
+  /*
+   * At this width the columns run down the page rather than across it, so the
+   * text takes the whole column. A measure capped for a wide screen would leave
+   * the right-hand side of every section empty.
+   *
+   * The type is a step larger, because a line that fills a wide column needs
+   * fewer characters to stay readable, and the column is now the measure.
+   */
+  .hero-read-text p,
+  .hero-flow p,
+  .hero-refusals p,
+  .hero-footer-copy > p {
+    max-width: none;
+    font-size: 18px;
+  }
+
+  .hero-fragment-canvas-frame {
+    --scale: 0.86;
+  }
+
+  .hero-payoff {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 22px;
+    padding: 26px;
+  }
+
+  .hero-footer {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 36px;
+  }
+
+  .hero-footer-action {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 560px) {
+  .hero-flow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hero-flow li:last-child {
+    grid-column: auto;
+  }
+
+  /* The crop has to fit the column exactly at this width. */
+  .hero-fragment-canvas-frame {
+    --scale: 0.575;
+  }
+
+  .hero-read-text p,
+  .hero-flow p,
+  .hero-refusals p,
+  .hero-footer-copy > p {
+    font-size: 17px;
+  }
+
+  /* The call to action is right below the words on a phone, so the masthead
+     does not need to repeat it. */
+  .hero-header-link {
+    display: none;
+  }
+
+  .brand {
+    white-space: nowrap;
+  }
+}

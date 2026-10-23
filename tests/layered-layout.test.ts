@@ -108,4 +108,29 @@ describe('layoutGraph', () => {
     ])
     expect(laid).toHaveLength(3)
   })
+
+  /**
+   * Files that are connected are placed next to each other.
+   *
+   * Sorting a column by name scatters connected files through it, and the
+   * edges between them cross the whole column. The ordering pass exists to
+   * stop that, and this is the case it exists for: naming the two importers
+   * the other way round is exactly what a name sort would produce, and the
+   * edges would cross.
+   */
+  it('keeps connected files next to each other in a column', () => {
+    const laid = layoutGraphLayered(nodes(['a.ts', 'b.ts', 'x.ts', 'y.ts']), [
+      { from: 'x.ts', to: 'b.ts', isExternal: false },
+      { from: 'y.ts', to: 'a.ts', isExternal: false },
+    ])
+
+    const rowOf = new Map(laid.map((node) => [node.id, node.position.y]))
+    const column = laid.filter((node) => node.position.x === laid.find((n) => n.id === 'x.ts')!.position.x)
+
+    // y.ts imports a.ts, which sits above b.ts. So y.ts belongs above x.ts.
+    const y = column.findIndex((node) => node.id === 'y.ts')
+    const x = column.findIndex((node) => node.id === 'x.ts')
+    expect(y).toBeLessThan(x)
+    expect(rowOf.get('y.ts')).toBeLessThan(rowOf.get('x.ts')!)
+  })
 })

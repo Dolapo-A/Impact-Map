@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { layoutGraphPhysics, MIN_NODE_DISTANCE } from '../src/lib/physics.ts'
+import { boxAt, boxesOverlap } from '../src/lib/geometry.ts'
 
 const nodes = (ids: string[]) => ids.map((id) => ({ id }))
 
@@ -48,5 +49,35 @@ describe('layoutGraph', () => {
       { from: 'c.ts', to: 'a.ts', isExternal: false },
     ])
     expect(laid).toHaveLength(3)
+  })
+
+  /**
+   * The reason the cards are rectangles rather than points.
+   *
+   * Two files side by side are 176 pixels wide. Treating them as dots and
+   * keeping them a hundred pixels apart puts one file's name on top of
+   * another's, which is what a force layout of wide cards always does.
+   */
+  it('never puts two cards on top of each other', () => {
+    const laid = layoutGraphPhysics(
+      nodes(['a.ts', 'b.ts', 'c.ts', 'd.ts', 'e.ts', 'f.ts']),
+      [
+        { from: 'b.ts', to: 'a.ts', isExternal: false },
+        { from: 'c.ts', to: 'b.ts', isExternal: false },
+        { from: 'd.ts', to: 'c.ts', isExternal: false },
+        { from: 'e.ts', to: 'd.ts', isExternal: false },
+        { from: 'f.ts', to: 'e.ts', isExternal: false },
+      ],
+    )
+
+    const boxes = laid.map((node) => boxAt(node.position))
+    for (let first = 0; first < boxes.length; first++) {
+      for (let second = first + 1; second < boxes.length; second++) {
+        expect(
+          boxesOverlap(boxes[first], boxes[second]),
+          `${laid[first].id} overlaps ${laid[second].id}`,
+        ).toBe(false)
+      }
+    }
   })
 })

@@ -8,6 +8,9 @@ Every claim it makes traces back to a real import edge. No LLM, no opinions.
 
 ## What it does
 
+The tool opens on a page that explains what it does and shows the bundled sample
+repository drawing itself. From there:
+
 1. **Pick a repository folder.** Files become nodes, imports become edges.
 2. **Say what changed** — paste a public GitHub pull request URL, or click files
    directly in the graph. Either route produces the same set of starting points.
@@ -24,6 +27,7 @@ tests it.*
 Requires **Node.js 20.19+ or 22.12+** and a **Chromium-based browser**
 (Chrome, Edge, Brave, or Arc) — folder selection with directory structure
 preserved needs `webkitdirectory`, which Safari and Firefox do not support.
+The 3D view needs WebGL, which every current browser has.
 
 ```bash
 npm install
@@ -32,13 +36,17 @@ npm run dev
 
 Then open the local URL the terminal prints (usually `http://localhost:5173`).
 
-Click **Choose repository folder** and select a folder of JS/TS source. A sample
+Choose **a repository folder**, and select a folder of JS/TS source. A sample
 repository is bundled at `sample-repo/` — pick that to try the tool without
 supplying your own code.
 
 Nothing is uploaded. Files are read in the page and never leave your machine.
-Nothing is persisted: closing the tab forgets everything, and `localStorage` is
-deliberately not used.
+Nothing about the repository is persisted: closing the tab forgets everything.
+The only thing the tool remembers is your colour theme, which is a preference and
+not a record of your code. `localStorage` is not used for anything else.
+
+The page follows your system's light or dark setting, and the switch beside the
+brand lets you pin it either way.
 
 To check a production build:
 
@@ -61,11 +69,20 @@ to purple on the spectrum — and because blue-vs-red survives red-green colour 
 deficiency, which affects roughly 8% of men and would otherwise hide the "untested"
 warning entirely.
 
-**Two layouts, switchable at the bottom of the screen.** *Columns* places files by
+**Three views, switchable at the bottom of the screen.** *Columns* places files by
 dependency depth, so the affected cluster reads as a contiguous band. *Physics*
-pulls linked files together, so a circular import becomes a visible pair. Neither
-encodes distance-from-change in the way the animation implies; both are
+pulls linked files together, so a circular import becomes a visible pair.
+*3D* puts the same graph in a volume you can move through, where a change reaches
+outward in every direction at once. Switching between them moves the files
+rather than replacing the picture, so the same graph is seen three times instead
+of three graphs being seen. The flat views are the default, because in three
+dimensions a node behind another is a claim you cannot check. Neither encodes
+distance-from-change in the way the animation implies; all three are
 deterministic, so the same repository always lays out identically.
+
+**Pointing at a file brings its neighbours forward.** Hovering a file dims
+everything else and lights up only the files directly connected to it, which is
+what makes a dense graph readable one file at a time.
 
 ## How it works
 
@@ -83,6 +100,12 @@ from `@xyflow/react`, which is erased at compile time.)
 | Coverage | `lib/coverage.ts` | Finds which test files reach each source file, directly or transitively |
 | Motion | `lib/motion.ts` | Where each node flies in from, and when — staggered by distance |
 | Layout | `lib/layout.ts`, `lib/layered.ts`, `lib/physics.ts` | Columns by depth (cycles collapsed via Tarjan's SCC), or force-directed |
+| Volume | `lib/spatial.ts`, `lib/volume.ts` | The same graph in three dimensions, and what the volume shows |
+| Sample | `lib/sampleRepo.ts` | The bundled repository, described in memory, so the landing page shows the real thing |
+| Theme | `lib/css.ts`, `hooks/useTheme.tsx` | The palette, and the switch that changes it |
+| Shape | `lib/geometry.ts`, `lib/viewport.ts` | The size of a file card, and the camera that frames the graph |
+| Move | `lib/morph.ts`, `lib/ticker.ts` | The movement between two layouts, and the clock that drives it |
+| Views | `lib/views.ts` | The three ways the graph can be looked at |
 | Paths | `lib/paths.ts` | Reconciles browser-selected paths with repository-relative ones |
 | Mismatch | `lib/mismatch.ts` | Compares a pull request's files against the chosen folder |
 | GitHub | `services/github.ts` | Parses a PR URL and fetches its changed file names |
@@ -126,12 +149,17 @@ grammar misreads `<T>` generics in JSX as comparison operators.
 npm test
 ```
 
-165 tests. They cover the import forms (static, re-export, `require`, dynamic
+215 tests. They cover the import forms (static, re-export, `require`, dynamic
 `import()`), multi-line imports, path resolution including `.js`→`.ts` and
 directory-index resolution, the tracer's deepest cases (multi-file blast radii,
 cycles, determinism), coverage detection, layout determinism for both algorithms,
-the animation's timing, the pull request lookup's failure modes, and an end-to-end
-pass over the bundled `sample-repo/`.
+that the column layout keeps connected files next to each other, that the force
+layout never puts two cards on top of one another, that the three-dimensional
+view shows the same graph with the same states and the same coverage, that the
+sample repository traces the way the tool traces it and still matches the
+repository on disk, the animation's timing, the camera that frames the graph, the
+pull request lookup's failure modes, and an end-to-end pass over the bundled
+`sample-repo/`.
 
 The tracer and the pull request lookup are tested most heavily: between them they
 are where a wrong answer would be most convincing.

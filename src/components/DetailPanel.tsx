@@ -90,14 +90,32 @@ export function DetailPanel({
   const isExternal = path.endsWith('::external')
   const cleanPath = path.replace('::external', '')
 
+  const status = (() => {
+    switch (section.kind) {
+      case 'changed':
+        return 'Changed by you'
+      case 'affected':
+        return `Reached by your change`
+      case 'untouched':
+        return 'Out of reach'
+      case 'external':
+        return 'Outside this repository'
+      default:
+        return 'Not traced yet'
+    }
+  })()
+
   return (
     <aside className="detail-panel" aria-label={`Details for ${cleanPath}`}>
       <header className="detail-header">
-        <h2 className="detail-path" title={cleanPath}>
-          {isExternal ? cleanPath : displayPath(cleanPath)}
-        </h2>
+        <div className="detail-heading-block">
+          <span className="detail-status">{status}</span>
+          <h2 className="detail-path" title={cleanPath}>
+            {isExternal ? cleanPath : displayPath(cleanPath)}
+          </h2>
+        </div>
         <button type="button" className="detail-close" onClick={onClose} aria-label="Close details">
-          ×
+          <span aria-hidden="true" />
         </button>
       </header>
 
@@ -119,7 +137,7 @@ export function DetailPanel({
       {section.kind === 'not-traced' && (
         <p className="detail-summary">
           {changedCount === 0
-            ? 'Use “Add to the files I changed” to start a trace from this file.'
+            ? 'Mark this file as changed to trace from it, or mark files elsewhere and press Trace impact.'
             : `You have marked ${changedCount} file${changedCount === 1 ? '' : 's'}. Press Trace impact to see what they reach.`}
         </p>
       )}
@@ -134,7 +152,7 @@ export function DetailPanel({
       {section.kind === 'affected' && (
         <>
           <p className="detail-summary">
-            Affected through <strong>{section.chain.length - 1}</strong> import
+            Reached through <strong>{section.chain.length - 1}</strong> import
             {section.chain.length - 1 === 1 ? '' : 's'} from your change.
           </p>
 

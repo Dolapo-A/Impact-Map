@@ -27,3 +27,9 @@ dist
 /.agents/
 /.claude/
 /skills-lock.json
+
+# Demo recordings. These are uploaded to Devpost through its own form, and
+# GitHub refuses any single file over 100 MB, so they stay out of the history
+# rather than breaking every push.
+/media/*.mp4
+/media/*.gif

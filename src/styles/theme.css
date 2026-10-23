@@ -7,33 +7,110 @@
  *
  * Blue sits close to purple on the spectrum, so the coverage channel also differs
  * by shape — a filled badge rather than a hue swap alone.
+ *
+ * Every colour here is written once and resolved per theme with `light-dark()`.
+ * The page decides its scheme in one place — `color-scheme` on the root element
+ * — and every token below follows it, so a theme change is a single attribute
+ * rather than a second copy of the stylesheet.
  */
 
 :root {
-  --bg: #0d1117;
-  --surface: #161b22;
-  --surface-raised: #1c2129;
-  --border: #2b313b;
-  --border-strong: #3d4451;
-  --text: #e6edf3;
-  --text-muted: #9198a1;
-  --text-faint: #6a737d;
+  /*
+   * `light dark` means "follow the reader's system". Setting `color-scheme`
+   * to a single value on the root pins it, which is how an explicit choice of
+   * Light or Dark overrides the system without touching any other rule.
+   */
+  color-scheme: light dark;
+
+  /* Ground and surfaces */
+  --bg: light-dark(#f4f6f8, #0d1117);
+  --surface: light-dark(#ffffff, #161b22);
+  --surface-raised: light-dark(#eef1f5, #1c2129);
+  --surface-sunken: light-dark(#e8ecf0, #010409);
+  --surface-hover: light-dark(#e3e8ee, #232a34);
+  --border: light-dark(#d5dbe2, #2b313b);
+  --border-strong: light-dark(#b3bcc7, #3d4451);
+  --border-hover: light-dark(#8c959f, #4a5260);
+
+  /* Ink */
+  --text: light-dark(#1f2328, #e6edf3);
+  --text-muted: light-dark(#57606a, #9aa6b4);
+  --text-faint: light-dark(#6e7781, #828a94);
+  --text-inverse: light-dark(#ffffff, #0d1117);
+
+  /* A ring that marks what is selected or in focus, without borrowing a state colour. */
+  --focus-tint: light-dark(#1f232840, #e6edf340);
 
   /* Channel 1 — distance from the change */
   --node-changed: #f0883e;
   --node-affected: #a371f7;
-  --node-untouched: #30363d;
-  --node-external: #484f58;
+  --node-untouched: light-dark(#e4e8ed, #30363d);
+  --node-external: light-dark(#d8dee4, #484f58);
+  --node-changed-border: light-dark(#c2410c, #ffb163);
+  --node-affected-border: light-dark(#7e22ce, #c39bff);
+
+  /* The ink on a coloured card, and the quiet second line under a file name. */
+  --node-changed-text: #1a1005;
+  --node-changed-folder: #4a2505;
+  --node-affected-text: #14061f;
+  --node-affected-folder: #2d0a4d;
+  --node-untouched-text: light-dark(#1f2328, #e6edf3);
+  --node-untouched-folder: light-dark(#57606a, #a8b3c0);
 
   /* Channel 2 — test coverage */
-  --covered: #58a6ff;
-  --uncovered: #f85149;
+  --covered: light-dark(#0969da, #58a6ff);
+  --uncovered: light-dark(#cf222e, #f85149);
 
-  --accent: #58a6ff;
-  --accent-muted: #1f6feb33;
+  /* Accent — chrome only, never a node */
+  --accent: light-dark(#0969da, #58a6ff);
+  --accent-strong: light-dark(#0550ae, #388bfd);
+  --accent-muted: light-dark(#0969da26, #1f6feb33);
+  /* The ink on an accent fill. In the dark theme the accent is a light blue, so
+     the ink on it is near-black; in the light theme it is a deep blue, so the ink
+     is white. Either way it clears 4.5:1. */
+  --accent-text: light-dark(#ffffff, #0d1117);
 
+  /* The graph's own chrome */
+  --edge: light-dark(#b6c0cc, #454f5d);
+  --edge-lit: light-dark(#57606a, #8b949e);
+  --canvas-dot: light-dark(#c8d0d9, #232a34);
+
+  /* Notices */
+  --danger-bg: light-dark(#ffebe9, #3d1418);
+  --danger-text: light-dark(#82071e, #ffb3ae);
+  --danger-border: light-dark(#ff8182, #5c1a20);
+  --warn-bg: light-dark(#fff8c5, #2d2410);
+  --warn-text: light-dark(#7d4e00, #f0d08a);
+  --warn-border: light-dark(#eac54f, #4a3c1a);
+
+  /* Type */
   --mono: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
   --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, system-ui, sans-serif;
+
+  /* Shape */
+  --radius-sm: 6px;
+  --radius: 9px;
+  --radius-lg: 14px;
+
+  /*
+   * Depth. Every shadow carries an offset and a blur: a glow with no offset
+   * reads as decoration rather than as something raised off the page.
+   */
+  --shadow-sm: 0 1px 2px #01040926, 0 1px 1px #0104091a;
+  --shadow: 0 8px 24px #01040966, 0 2px 6px #0104094d;
+  --shadow-lg: 0 24px 64px #01040980, 0 8px 24px #01040959;
+
+  /* Focus. One ring, used everywhere, so keyboard focus is the same object. */
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+}
+
+/* An explicit choice overrides the system, in both directions. */
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
 }
 
 * {
@@ -51,8 +128,9 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--sans);
-  font-size: 14px;
+  font-size: 16px;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 180ms ease, color 180ms ease;
 }
 
 button {
@@ -60,4 +138,51 @@ button {
   font-size: inherit;
   color: inherit;
   cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+::selection {
+  background: var(--accent-muted);
+}
+
+/*
+ * Scrollbars are part of the page, not the browser's leftovers. Left alone they
+ * arrive as bright grey slabs in a deliberately dark interface.
+ */
+* {
+  scrollbar-color: var(--border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--text-faint);
+  background-clip: content-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    transition: none;
+  }
 }

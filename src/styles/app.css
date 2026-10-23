@@ -1,4 +1,9 @@
-/* Layout: control strip on top, canvas filling the rest, panel beside it. */
+/* The workspace: a control strip on top, the graph filling the rest, and the
+   detail panel beside the graph rather than over it. */
+
+/* ---------------------------------------------------------------------------
+   Shell
+   --------------------------------------------------------------------------- */
 
 .app {
   display: flex;
@@ -6,12 +11,11 @@
   height: 100%;
 }
 
-/* Control strip — visually subordinate to the graph, per spec.md > Look and Feel. */
 .control-strip {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 10px 16px;
+  gap: 14px;
+  padding: 9px 16px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -20,18 +24,104 @@
 .brand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--text);
 }
 
 .brand-mark {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   background: var(--node-changed);
   box-shadow: 0 0 0 3px var(--accent-muted);
+}
+
+.hint,
+.status {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.status {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The workspace: the graph keeps its space, and the panel takes a slice of it
+   rather than covering what is underneath. */
+.workspace {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  animation: workspace-in 360ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@keyframes workspace-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace {
+    animation: none;
+  }
+}
+
+.workspace-canvas {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   Controls
+   --------------------------------------------------------------------------- */
+
+.button {
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-raised);
+  color: var(--text);
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+
+.button:hover:not(:disabled) {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.button-primary {
+  background: var(--accent);
+  border-color: var(--accent-strong);
+  color: var(--accent-text);
+  font-weight: 550;
+}
+
+.button-primary:hover:not(:disabled) {
+  background: var(--accent-strong);
+  border-color: var(--accent);
 }
 
 .folder-picker {
@@ -40,50 +130,76 @@
   gap: 12px;
 }
 
-.button {
-  padding: 6px 12px;
-  border-radius: 6px;
-  border: 1px solid var(--border-strong);
-  background: var(--surface-raised);
-  color: var(--text);
-  transition: background 120ms ease, border-color 120ms ease;
-}
-
-.button:hover:not(:disabled) {
-  background: #232a34;
-  border-color: #4a5260;
-}
-
-.button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.button-primary {
-  background: #1f6feb;
-  border-color: #1f6feb;
-}
-
-.button-primary:hover:not(:disabled) {
-  background: #388bfd;
-  border-color: #388bfd;
-}
-
-.hint,
-.status {
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
-.status {
-  margin-left: auto;
-  font-family: var(--mono);
-}
-
 /* Compact form when the picker sits in the nav bar after a folder is loaded. */
 .control-strip .folder-picker .button {
   padding: 5px 11px;
   font-size: 12px;
+}
+
+.pr-input {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+}
+
+.pr-input input {
+  width: 230px;
+  padding: 6px 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.pr-input input::placeholder {
+  color: var(--text-faint);
+}
+
+.pr-input input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.pr-input .button {
+  padding: 5px 11px;
+  font-size: 12px;
+}
+
+/* The theme switch — three states, because "always dark" and "whatever my
+   machine says" are different intentions. */
+.theme-switcher {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  flex-shrink: 0;
+}
+
+.theme-option {
+  padding: 3px 9px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.theme-option:hover {
+  color: var(--text);
+}
+
+.theme-option.is-active {
+  background: var(--surface-raised);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
 }
 
 /* Layout toggle — two mutually exclusive options, so radio-style, not a switch. */
@@ -92,23 +208,21 @@
   align-items: center;
   gap: 2px;
   padding: 2px;
-  border: 1px solid var(--border);
   border-radius: 999px;
-  background: var(--bg);
 }
 
 .layout-toggle-label {
-  padding: 0 6px 0 4px;
+  padding: 0 7px 0 5px;
   color: var(--text-faint);
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 
 .toggle-option {
-  padding: 3px 10px;
+  padding: 4px 11px;
   border: none;
-  border-radius: 4px;
+  border-radius: 999px;
   background: transparent;
   color: var(--text-muted);
   font-size: 12px;
@@ -125,275 +239,31 @@
   box-shadow: inset 0 0 0 1px var(--border-strong);
 }
 
+/* ---------------------------------------------------------------------------
+   Notices
+   --------------------------------------------------------------------------- */
+
 .notice {
   margin: 0;
-  padding: 8px 16px;
+  padding: 9px 16px;
   font-size: 13px;
   border-bottom: 1px solid var(--border);
 }
 
 .notice-error {
-  background: #3d1418;
-  color: #ffb3ae;
+  background: var(--danger-bg);
+  color: var(--danger-text);
 }
 
 .notice-warn {
-  background: #2d2410;
-  color: #f0d08a;
-}
-
-.notice-info {
-  background: #102a43;
-  color: #b7dcff;
-}
-
-.canvas-area {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-}
-
-.graph-canvas {
-  width: 100%;
-  height: 100%;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 18px;
-  text-align: center;
-  padding: 24px;
-}
-
-/* The one call to action, centred where the graph will appear. */
-.folder-picker.is-centred {
-  flex-direction: column;
-  gap: 12px;
-}
-
-.folder-picker.is-centred .button {
-  padding: 11px 22px;
-  font-size: 15px;
-}
-
-.empty-hint {
-  color: var(--text-muted);
-  margin: 0;
-  max-width: 440px;
-  line-height: 1.6;
-}
-
-/*
- * Bottom-centre action pill. Holds the two things the user acts on — trace and
- * layout — and nothing else, so the graph keeps the screen. It lifts above the
- * legend so the two never overlap.
- */
-.action-dock {
-  position: absolute;
-  left: 50%;
-  bottom: 22px;
-  transform: translateX(-50%);
-  z-index: 7;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  background: #161b22f2;
-  box-shadow: 0 8px 28px #00000066;
-  backdrop-filter: blur(8px);
-}
-
-.action-dock .button {
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 15px;
-}
-
-.action-dock .layout-toggle {
-  border: none;
-  background: transparent;
-  padding: 0;
-}
-
-.action-divider {
-  width: 1px;
-  height: 20px;
-  background: var(--border);
-}
-
-.pr-input {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.pr-input input {
-  width: 220px;
-  padding: 6px 10px;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 11px;
-}
-
-.pr-input input::placeholder {
-  color: var(--text-faint);
-}
-
-.pr-input input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-
-.action-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 17px;
-  height: 17px;
-  padding: 0 5px;
-  border-radius: 999px;
-  background: #ffffff26;
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.empty-hint code {
-  font-family: var(--mono);
-  color: var(--text-faint);
-}
-
-/* Node styling — two independent channels, per spec.md > Look and Feel. */
-.file-node {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 10px;
-  min-width: 170px;
-  max-width: 230px;
-  border-radius: 7px;
-  border: 1px solid var(--border);
-  background: var(--node-untouched);
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 11px;
-  cursor: pointer;
-  transition: transform 120ms ease, border-color 120ms ease;
-}
-
-.file-node:hover {
-  transform: translateY(-1px);
-}
-
-.file-node.is-selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-muted);
-}
-
-.file-node-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Channel 1 — fill carries distance from the change. */
-.state-changed {
-  background: var(--node-changed);
-  border-color: #ffb163;
-  color: #1a1005;
-  font-weight: 600;
-}
-
-.state-affected {
-  background: var(--node-affected);
-  border-color: #c39bff;
-  color: #14061f;
-}
-
-.state-external {
-  background: var(--node-external);
-  border-style: dashed;
-  color: var(--text-muted);
-}
-
-.file-node-tag,
-.file-node-flag {
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 1px 4px;
-  border-radius: 3px;
-  flex-shrink: 0;
-}
-
-.file-node-tag {
-  background: #ffffff26;
-}
-
-.file-node-flag {
-  background: var(--uncovered);
-  color: #fff;
-}
-
-.file-node-distance {
-  margin-left: auto;
-  font-size: 10px;
-  opacity: 0.7;
-  flex-shrink: 0;
-}
-
-/*
- * Channel 2 — coverage. Distinguished by shape AND weight, not hue alone, because
- * blue and purple sit close on the spectrum.
- *
- *   uncovered → a solid red disc, 9px. Heavy, impossible to miss.
- *   covered   → a blue outline ring, 9px with a 2px stroke, open in the middle.
- *
- * The gap between the two is what carries the meaning at small zoom: solid vs
- * hollow reads even when the colours do not separate cleanly.
- */
-.coverage-badge {
-  margin-left: auto;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--uncovered);
-  flex-shrink: 0;
-}
-
-.coverage-ring {
-  margin-left: auto;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  border: 2px solid var(--covered);
-  flex-shrink: 0;
-}
-
-/*
- * The payoff state: an orange core with a red disc — "you changed this and nothing
- * tests it". Give the badge its own contrast ring so it survives the orange fill
- * underneath it.
- */
-.state-changed .coverage-badge {
-  box-shadow: 0 0 0 2px #7a3d0d;
+  background: var(--warn-bg);
+  color: var(--warn-text);
 }
 
 /* Mismatch notice — a designed state, not an error toast. It names the files. */
 .notice-mismatch {
-  background: #2d2410;
-  border-bottom: 1px solid #4a3c1a;
+  background: var(--warn-bg);
+  border-bottom: 1px solid var(--warn-border);
   color: var(--text);
   padding: 14px 16px;
   display: flex;
@@ -405,7 +275,7 @@
 .mismatch-title {
   margin: 0;
   font-weight: 600;
-  color: #f0d08a;
+  color: var(--warn-text);
 }
 
 .mismatch-body {
@@ -417,8 +287,8 @@
 
 .mismatch-files-label {
   margin: 0;
-  color: var(--text-faint);
-  font-size: 10px;
+  color: var(--text-muted);
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -443,9 +313,307 @@
   margin-top: 2px;
 }
 
-/* Legend — two channels with no key are unreadable. Sits bottom-left, out of the way. */
+/* ---------------------------------------------------------------------------
+   The graph
+   --------------------------------------------------------------------------- */
+
+.graph-canvas {
+  width: 100%;
+  height: 100%;
+}
+
 /*
- * The expansion. Nodes fly out from the changed files, nearest ring first.
+ * The volume.
+ *
+ * The canvas fills the same space the flat graph does, so the three views are
+ * the same size and the reader's eye has nowhere to jump.
+ */
+.spatial-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  animation: spatial-in 420ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@keyframes spatial-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spatial-canvas {
+    animation: none;
+  }
+}
+
+/*
+ * A file's name, floating in the volume.
+ *
+ * Real text rather than a texture: the names are the content, and they have to
+ * stay readable at any angle. The colour follows the file's state, so the
+ * legend still applies in three dimensions.
+ */
+.spatial-label {
+  display: block;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--text);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+.spatial-label.is-dimmed {
+  opacity: 0.3;
+}
+
+.spatial-label.is-changed {
+  color: var(--node-changed);
+  font-weight: 600;
+}
+
+.spatial-label.is-affected {
+  color: var(--node-affected);
+}
+
+.spatial-label.is-untouched,
+.spatial-label.is-external {
+  color: var(--text-muted);
+}
+
+/*
+ * One file.
+ *
+ * The card is a fixed size, because the layout algorithms place rectangles
+ * rather than points. A known size is what keeps files from overlapping and
+ * what lets an edge stop at a card's border.
+ */
+.file-node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 176px;
+  height: 44px;
+  padding: 0 9px 0 11px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--node-untouched);
+  color: var(--node-untouched-text);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.file-node:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.file-node-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  flex: 1;
+}
+
+.file-node-name {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-node-folder {
+  font-size: 10.5px;
+  line-height: 1.3;
+  color: var(--node-untouched-folder);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-node-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Channel 1 — fill carries distance from the change. */
+.state-changed {
+  background: var(--node-changed);
+  border-color: var(--node-changed-border);
+  color: var(--node-changed-text);
+}
+
+.state-changed .file-node-folder {
+  color: var(--node-changed-folder);
+}
+
+.state-affected {
+  background: var(--node-affected);
+  border-color: var(--node-affected-border);
+  color: var(--node-affected-text);
+}
+
+.state-affected .file-node-folder {
+  color: var(--node-affected-folder);
+}
+
+.state-external {
+  background: var(--node-external);
+  border-style: dashed;
+  color: var(--text-muted);
+}
+
+.state-external .file-node-folder {
+  color: var(--text-faint);
+}
+
+.file-node.is-selected {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--focus-tint), var(--shadow);
+}
+
+/*
+ * Focus mode: pointing at one file brings its neighbours forward and steps the
+ * rest back. The outline is white rather than blue on purpose — blue already
+ * means "a test reaches this file", and a focus ring must not borrow it.
+ */
+.file-node.is-lit {
+  box-shadow: 0 0 0 1px var(--focus-tint), var(--shadow-sm);
+}
+
+.file-node.is-focused {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--focus-tint), var(--shadow);
+}
+
+.file-node.is-dimmed {
+  opacity: 0.28;
+}
+
+.file-node-tag,
+.file-node-flag {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 1px 4px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.file-node-tag {
+  background: color-mix(in srgb, currentColor 16%, transparent);
+}
+
+.file-node-flag {
+  background: var(--uncovered);
+  color: #ffffff;
+}
+
+.file-node-distance {
+  font-family: var(--mono);
+  font-size: 10px;
+  opacity: 0.75;
+  flex-shrink: 0;
+}
+
+/*
+ * Channel 2 — coverage. Distinguished by shape AND weight, not hue alone, because
+ * blue and purple sit close on the spectrum.
+ *
+ *   uncovered → a solid red disc, 9px. Heavy, impossible to miss.
+ *   covered   → a blue outline ring, 9px with a 2px stroke, open in the middle.
+ *
+ * The gap between the two is what carries the meaning at small zoom: solid vs
+ * hollow reads even when the colours do not separate cleanly.
+ */
+.coverage-badge {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--uncovered);
+  flex-shrink: 0;
+}
+
+.coverage-ring {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2px solid var(--covered);
+  flex-shrink: 0;
+}
+
+/*
+ * The payoff state: an orange core with a red disc — "you changed this and nothing
+ * tests it". Give the badge its own contrast ring so it survives the orange fill
+ * underneath it.
+ */
+.state-changed .coverage-badge {
+  box-shadow: 0 0 0 2px var(--node-changed-folder);
+}
+
+.state-affected .coverage-badge {
+  box-shadow: 0 0 0 2px var(--node-affected-folder);
+}
+
+/*
+ * The handles sit at the centre of the card, not on its edges. An edge is a
+ * line between two files, and the cards are drawn over the edges, so a line
+ * that starts and ends at a centre is hidden under the cards and shows only in
+ * the gap between them. Nothing ever runs through a file's own name.
+ */
+.file-node .node-handle {
+  width: 1px;
+  height: 1px;
+  min-width: 1px;
+  min-height: 1px;
+  border: none;
+  background: transparent;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+}
+
+.edge-internal {
+  stroke: var(--edge);
+  stroke-width: 1.4;
+}
+
+.edge-external {
+  stroke: var(--node-external);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+}
+
+.react-flow__edge.is-lit .react-flow__edge-path {
+  stroke: var(--edge-lit);
+  stroke-width: 2;
+}
+
+.react-flow__edge.is-dimmed .react-flow__edge-path {
+  opacity: 0.12;
+}
+
+/*
+ * The expansion.
  *
  * The start offset is supplied per node as `--fly-dx` / `--fly-dy` (see
  * `src/lib/motion.ts`), so the keyframes stay declarative here and the geometry
@@ -463,11 +631,11 @@
 @keyframes fly-out {
   from {
     opacity: 0;
-    transform: translate(var(--fly-dx), var(--fly-dy)) scale(0.86);
+    transform: translate(var(--fly-dx), var(--fly-dy));
   }
   to {
     opacity: 1;
-    transform: translate(0, 0) scale(1);
+    transform: translate(0, 0);
   }
 }
 
@@ -477,6 +645,9 @@
  * The animation must target the `<path>`: React Flow puts an edge's `style` on the
  * wrapping `<g>`, where `stroke-dashoffset` has no effect. `pathOptions.style`
  * (see `withDrawIn`) is what lands on the path element.
+ *
+ * The path's length is normalised to 1 by `pathLength` on the edge component, so
+ * a dash length of 1 means the whole line rather than one pixel of it.
  */
 .react-flow__edge.is-drawing .react-flow__edge-path {
   stroke-dasharray: 1;
@@ -493,7 +664,7 @@
 
 /* Untouched files stay dim and static throughout — the point is that they did not move. */
 .file-node.state-untouched {
-  opacity: 0.55;
+  opacity: 0.62;
 }
 
 /*
@@ -522,29 +693,190 @@
   }
 }
 
-/* Detail panel — beside the canvas, never over it. The graph keeps its space, so a
-   clicked file never loses its position relative to the change. */
-.detail-panel {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 360px;
-  z-index: 6;
+/* ---------------------------------------------------------------------------
+   Legend, hint and the action dock
+   --------------------------------------------------------------------------- */
+
+/*
+ * The key to the two colour channels.
+ *
+ * Two independent encodings are unreadable without a key. Both groups are shown
+ * together so the separation between them is explicit: one answers "how far from
+ * my change?", the other "is anything testing this?".
+ *
+ * The panel around it belongs to the workspace. The inline form, used inside a
+ * crop of the interface, is just the key.
+ */
+.legend {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 16px;
+  gap: 11px;
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.legend:not(.is-inline) {
+  position: absolute;
+  left: 16px;
+  bottom: 18px;
+  z-index: 5;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(8px);
+}
+
+.legend-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.legend-heading {
+  color: var(--text-faint);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.legend-swatch.changed {
+  background: var(--node-changed);
+}
+
+.legend-swatch.affected {
+  background: var(--node-affected);
+}
+
+.legend-swatch.untouched {
+  background: var(--node-untouched);
+  border: 1px solid var(--border-strong);
+}
+
+/* Mirrors the node badges exactly, so the legend teaches the real shape. */
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-dot.covered {
+  border: 2px solid var(--covered);
+}
+
+.legend-dot.uncovered {
+  background: var(--uncovered);
+}
+
+/*
+ * The one line of guidance, placed where the eye already is. It changes with the
+ * state of the work rather than standing still and being ignored.
+ */
+.workspace-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 70px;
+  transform: translateX(-50%);
+  z-index: 6;
+  margin: 0;
+  max-width: 560px;
+  padding: 7px 14px;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+/*
+ * Bottom-centre action pill. Holds the two things the user acts on — trace and
+ * layout — and nothing else, so the graph keeps the screen.
+ */
+.action-dock {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+  box-shadow: var(--shadow);
+}
+
+.action-dock .button {
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 16px;
+}
+
+.action-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 22%, transparent);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.action-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+}
+
+/* ---------------------------------------------------------------------------
+   The detail panel
+   --------------------------------------------------------------------------- */
+
+/*
+ * Beside the canvas, never over it. The graph keeps its space, so a clicked
+ * file never loses its position relative to the change.
+ */
+.detail-panel {
+  flex: 0 0 380px;
+  width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
   overflow-y: auto;
   background: var(--surface);
   border-left: 1px solid var(--border);
-  animation: panel-in 180ms ease-out;
+  animation: panel-in 200ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 @keyframes panel-in {
   from {
     opacity: 0;
-    transform: translateX(12px);
+    transform: translateX(10px);
   }
   to {
     opacity: 1;
@@ -562,7 +894,19 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
+}
+
+.detail-heading-block {
+  min-width: 0;
+}
+
+.detail-status {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text-faint);
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .detail-path {
@@ -571,19 +915,20 @@
   font-size: 13px;
   font-weight: 600;
   word-break: break-all;
+  line-height: 1.35;
 }
 
 .detail-close {
   flex-shrink: 0;
-  width: 22px;
-  height: 22px;
+  position: relative;
+  width: 24px;
+  height: 24px;
   padding: 0;
-  font-size: 17px;
-  line-height: 1;
   border: 1px solid var(--border);
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   background: var(--surface-raised);
   color: var(--text-muted);
+  transition: color 120ms ease, border-color 120ms ease;
 }
 
 .detail-close:hover {
@@ -591,24 +936,46 @@
   border-color: var(--border-strong);
 }
 
+/* A drawn cross, rather than a glyph standing in for one. */
+.detail-close span::before,
+.detail-close span::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 1.5px;
+  background: currentColor;
+  border-radius: 1px;
+}
+
+.detail-close span::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.detail-close span::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
 .detail-mark {
-  padding: 6px 10px;
+  padding: 8px 11px;
   border: 1px solid var(--border-strong);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--surface-raised);
   color: var(--text);
-  font-size: 12px;
+  font-size: 13px;
   text-align: left;
+  transition: background 120ms ease, border-color 120ms ease;
 }
 
 .detail-mark:hover {
-  background: #232a34;
+  background: var(--surface-hover);
 }
 
 .detail-mark.is-changed {
   background: var(--node-changed);
-  border-color: #ffb163;
-  color: #1a1005;
+  border-color: var(--node-changed);
+  color: var(--node-changed-text);
   font-weight: 600;
 }
 
@@ -616,20 +983,19 @@
   margin: 0;
   color: var(--text-muted);
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .detail-summary strong {
   color: var(--text);
+  font-weight: 650;
 }
 
 .detail-heading {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   color: var(--text-faint);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
 }
 
 .detail-list {
@@ -644,6 +1010,7 @@
 .chain code {
   font-family: var(--mono);
   color: var(--text);
+  font-size: 11.5px;
 }
 
 /* The import chain is the evidence, so it reads as a path: a connected line with
@@ -704,143 +1071,29 @@
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #1a1005;
+  color: var(--node-changed-text);
   background: var(--node-changed);
 }
 
 .detail-warning {
   margin: 0;
-  padding: 7px 9px;
-  border-radius: 5px;
-  background: #2d2410;
-  color: #f0d08a;
+  padding: 9px 11px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-bg);
+  color: var(--warn-text);
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
-.legend {
-  position: absolute;
-  left: 16px;
-  bottom: 22px;
-  z-index: 5;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px 14px;
-  background: #161b22e6;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 11px;
-  color: var(--text-muted);
-  backdrop-filter: blur(6px);
-}
+/* ---------------------------------------------------------------------------
+   React Flow chrome
+   --------------------------------------------------------------------------- */
 
-.legend-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.legend-heading {
-  color: var(--text-faint);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-size: 10px;
-}
-
-.legend-row {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  white-space: nowrap;
-}
-
-.legend-swatch {
-  width: 12px;
-  height: 12px;
-  border-radius: 4px;
-  flex-shrink: 0;
-}
-
-.legend-swatch.changed {
-  background: var(--node-changed);
-}
-.legend-swatch.affected {
-  background: var(--node-affected);
-}
-.legend-swatch.untouched {
-  background: var(--node-untouched);
-  border: 1px solid var(--border-strong);
-}
-
-/* Mirrors the node badges exactly, so the legend teaches the real shape. */
-.legend-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.legend-dot.covered {
-  border: 2px solid var(--covered);
-}
-.legend-dot.uncovered {
-  background: var(--uncovered);
-}
-
-/* Handles must stay invisible but clickable — they are the edge anchor points. */
-.node-handle {
-  width: 6px;
-  height: 6px;
-  border: none;
-  background: var(--border-strong);
-  opacity: 0;
-  transition: opacity 120ms ease;
-}
-
-.react-flow__node:hover .node-handle {
-  opacity: 1;
-}
-
-.edge-internal {
-  stroke: var(--border-strong);
-  stroke-width: 1.4;
-}
-
-.edge-external {
-  stroke: var(--node-external);
-  stroke-width: 1.2;
-  stroke-dasharray: 3 3;
-}
-
-.detail-placeholder {
-  position: absolute;
-  top: 56px;
-  right: 0;
-  bottom: 0;
-  width: 320px;
-  padding: 16px;
-  background: var(--surface);
-  border-left: 1px solid var(--border);
-  overflow-y: auto;
-}
-
-.detail-placeholder h2 {
-  font-family: var(--mono);
-  font-size: 13px;
-  margin: 0 0 8px;
-  word-break: break-all;
-}
-
-.detail-placeholder p {
-  color: var(--text-muted);
-  font-size: 13px;
-}
-
-/* React Flow chrome, tuned to the dark palette rather than defaulting to white. */
 .react-flow__controls {
-  box-shadow: none;
+  box-shadow: var(--shadow-sm);
   border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
 }
 
 .react-flow__controls-button {
@@ -848,6 +1101,12 @@
   border-bottom: 1px solid var(--border);
   color: var(--text);
   fill: var(--text);
+  width: 26px;
+  height: 26px;
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none;
 }
 
 .react-flow__controls-button:hover {
@@ -856,4 +1115,34 @@
 
 .react-flow__attribution {
   display: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Narrow screens
+   --------------------------------------------------------------------------- */
+
+@media (max-width: 860px) {
+  .control-strip {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .pr-input {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .pr-input input {
+    flex: 1;
+    width: auto;
+  }
+
+  .detail-panel {
+    flex: 0 0 300px;
+    width: 300px;
+  }
+
+  .legend {
+    display: none;
+  }
 }

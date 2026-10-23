@@ -38,6 +38,19 @@ export const LAYOUT_LABELS: Record<LayoutMode, string> = {
   physics: 'Physics',
 }
 
+/**
+ * How much an edge bows away from the straight line between two files.
+ *
+ * In the column layout the two ends are already in a tidy row, so a straight
+ * line is the clean answer. In the physics layout the files land wherever the
+ * forces put them, and a slight bow keeps a bundle of parallel edges from
+ * collapsing into one thick line.
+ */
+export const EDGE_CURVE: Record<LayoutMode, number> = {
+  layered: 0,
+  physics: 0.07,
+}
+
 export interface LaidOutNode {
   id: string
   position: { x: number; y: number }

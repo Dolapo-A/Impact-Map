@@ -239,6 +239,12 @@ Renders nodes and edges with React Flow. Handles pan, zoom, and node click. Runs
 Talks to: **Graph Builder**, **Tracer**, **Change Selector**, **Detail Panel**.
 PRD ref: `prd.md > Tracing impact`, `prd.md > Screens and Layout`, `prd.md > Look and Feel`.
 
+### Spatial View
+The same graph drawn in a volume, with three.js. The files, the imports, the trace and the two colour channels are identical to the flat views; what changes is that a change reaches outward in every direction at once. Built with `@react-three/fiber`, over a force layout in three dimensions that is seeded rather than random, so the same repository always produces the same volume.
+Talks to: **Graph Builder**, **Tracer**, **Change Selector**, **Detail Panel**.
+PRD ref: `prd.md > Non-Goals` (3D as the default view), `prd.md > Look and Feel`.
+The flat views stay the default. In three dimensions a node behind another cannot be checked, which works against a product whose claim is that every claim can be verified.
+
 ### Control Strip
 The thin bar along the top: folder selection, the optional PR URL field, and the button that starts the trace. Visually subordinate to the canvas.
 Talks to: **Folder Picker**, **GitHub PR Lookup**, **Tracer**.
@@ -312,12 +318,15 @@ impact-map/
 │   │   ├── graph.ts              # build nodes + edges from files and imports
 │   │   ├── trace.ts              # outward walk, cycle-safe, records distance + path
 │   │   ├── coverage.ts           # which test files exercise a given file
+│   │   ├── spatial.ts            # force layout in three dimensions
+│   │   ├── volume.ts             # what the three-dimensional view shows
 │   │   └── skeleton.ts           # test skeleton  [CUT in 5-build — never created]
 │   │
 │   ├── components/
 │   │   ├── FolderPicker.tsx      # directory selection
 │   │   ├── ControlStrip.tsx      # top bar: folder, PR URL, trace button
 │   │   ├── GraphCanvas.tsx       # react-flow rendering + expansion animation
+│   │   ├── SpatialCanvas.tsx     # the same graph in a volume, with three.js
 │   │   ├── FileNode.tsx          # one node: fill colour + coverage ring
 │   │   ├── DetailPanel.tsx       # right-hand panel
 │   │   └── MismatchNotice.tsx    # the PR/folder disagreement warning
@@ -402,6 +411,7 @@ Also worth knowing, lower severity:
 | Public repos only, unauthenticated | no token, no credential handling | private PRs won't work; 60 req/hour |
 | Tree-sitter for parsing | correct on multi-line imports; a regex would silently produce wrong graphs | WASM setup risk — see below |
 | TypeScript | the learner's explicit language choice | the compiler step and type-error debugging |
+| A third, three-dimensional view | shows a blast radius reaching outward in every direction at once, which a flat picture cannot | a node behind another cannot be checked, so the flat views stay the default and the volume is a view beside them, not a replacement |
 
 **The genuine uncertainty worth naming: WebAssembly grammar setup.**
 

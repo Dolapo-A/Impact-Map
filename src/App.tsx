@@ -1,18 +1,20 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
+import { DetailPanel } from './components/DetailPanel'
 import { FolderPicker } from './components/FolderPicker'
 import { GraphCanvas } from './components/GraphCanvas'
-import { DetailPanel } from './components/DetailPanel'
+import { Hero } from './components/Hero'
 import { LayoutToggle } from './components/LayoutToggle'
 import { Legend } from './components/Legend'
 import { MismatchNotice } from './components/MismatchNotice'
 import { PullRequestInput } from './components/PullRequestInput'
+import { ThemeSwitcher } from './components/ThemeSwitcher'
 import { compareWithRepository, shouldAutoMark, type MismatchOutcome } from './lib/mismatch'
 import type { LookupFailure, PullRequestFiles } from './services/github'
 import { findCoverage, type CoverageByPath } from './lib/coverage'
 import { buildGraph, type DependencyGraph, type SourceFile } from './lib/graph'
 import { shouldIncludeFile } from './lib/files'
-import type { LayoutMode } from './lib/layout'
+import type { ViewMode } from './lib/views'
 import { parseFile, type ImportStatement } from './lib/parser'
 import { resolveToRepoFile } from './lib/resolve'
 import { traceImpact, type TraceResult } from './lib/trace'
@@ -38,10 +40,12 @@ export default function App() {
   const [changedPaths, setChangedPaths] = useState<Set<string>>(new Set())
   const [traceResult, setTraceResult] = useState<TraceResult | null>(null)
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
-  const [layoutMode, setLayoutMode] = useState<LayoutMode>('layered')
+  const [viewMode, setViewMode] = useState<ViewMode>('layered')
   const [error, setError] = useState<string | null>(null)
   const [prFailure, setPrFailure] = useState<LookupFailure | null>(null)
   const [prState, setPrState] = useState<PullRequestState | null>(null)
+  /** Bumped when the detail panel opens or closes, because that resizes the canvas. */
+  const [panelEpoch, setPanelEpoch] = useState(0)
 
   const handleFilesSelected = useCallback(async (files: SourceFile[], folderName: string) => {
     setReading(true)
@@ -78,8 +82,7 @@ export default function App() {
     }
   }, [])
 
-  const toggleChangedPath = useCallback((path: string) => {
-    setChangedPaths((current) => {
+  const toggleChangedPath = useCallback((path: string) => {    setChangedPaths((current) => {
       const next = new Set(current)
       if (next.has(path)) next.delete(path)
       else next.add(path)
@@ -94,6 +97,15 @@ export default function App() {
     if (!repository || changedPaths.size === 0) return
     setTraceResult(traceImpact(repository.graph, changedPaths))
   }, [changedPaths, repository])
+
+  /**
+   * Opening or closing the detail panel resizes the canvas, so the graph has to
+   * settle onto its new shape rather than leave files off the edge.
+   */
+  const selectPath = useCallback((path: string | null) => {
+    setSelectedPath(path)
+    setPanelEpoch((epoch) => epoch + 1)
+  }, [])
 
   /**
    * A pull request is only trusted when every file it names is in the chosen folder.
@@ -144,6 +156,32 @@ export default function App() {
     [],
   )
 
+  /**
+   * The one line of guidance, placed where the eye already is.
+   * The graph is the product, so the screen has no room for a tutorial. What it
+   * does have room for is a sentence that says what to do next, and changes when
+   * the next thing changes.
+   */
+  const hint = useMemo(() => {
+    if (changedPaths.size === 0) {
+      return 'Open a file to read it, then mark it as changed. You can paste a pull request URL above instead.'
+    }
+    if (!traceResult) {
+      return `${changedPaths.size} file${changedPaths.size === 1 ? '' : 's'} marked. Trace impact to see what ${
+        changedPaths.size === 1 ? 'it reaches' : 'they reach'
+      }.`
+    }
+    const reached = traceResult.affected.size
+    if (reached === 0) {
+      return 'Nothing in this repository imports the files you marked.'
+    }
+    return `${reached} file${reached === 1 ? '' : 's'} reach your change. Open one for the imports that connect it back.`
+  }, [changedPaths.size, traceResult])
+
+  if (!repository) {
+    return <Hero onFilesSelected={handleFilesSelected} disabled={reading} />
+  }
+
   return (
     <div className="app">
       <header className="control-strip">
@@ -155,31 +193,36 @@ export default function App() {
         {/* Once a repository is loaded, the picker moves up here. Without it the
             user has no way to choose a different folder and must refresh the page —
             the button disappearing after its first use was a real dead end. */}
-        {repository && (
-          <FolderPicker
-            onFilesSelected={handleFilesSelected}
-            disabled={reading}
-            showHint={false}
-          />
-        )}
+        <FolderPicker
+          variant="bar"
+          onFilesSelected={handleFilesSelected}
+          disabled={reading}
+          showHint={false}
+        />
 
-        {reading && (
+        {reading ? (
           <span className="status" role="status">
             Reading and parsing files…
           </span>
-        )}
-
-        {repository && !reading && (
+        ) : (
           <span className="status">
             {repository.folderName} · {repository.graph.nodes.length} files ·{' '}
             {repository.graph.edges.filter((edge) => !edge.isExternal).length} imports
           </span>
         )}
+
+        <PullRequestInput
+          disabled={false}
+          onResolved={handlePullRequest}
+          onFailed={handlePullRequestFailure}
+        />
+
+        <ThemeSwitcher />
       </header>
 
       {error && <p className="notice notice-error">{error}</p>}
 
-      {repository?.graph.parseFailures.length ? (
+      {repository.graph.parseFailures.length ? (
         <p className="notice notice-warn">
           {repository.graph.parseFailures.length} file
           {repository.graph.parseFailures.length === 1 ? '' : 's'} could not be parsed:{' '}
@@ -203,83 +246,61 @@ export default function App() {
         />
       )}
 
-      {traceResult && traceResult.affected.size === 0 && (
-        <p className="notice notice-info">No impact found inside this repository.</p>
-      )}
+      <div className="workspace">
+        <div className="workspace-canvas">
+          <GraphCanvas
+            graph={repository.graph}
+            coverage={repository.coverage}
+            changedPaths={changedPaths}
+            traceResult={traceResult}
+            viewMode={viewMode}
+            fitSignal={panelEpoch}
+            // A click inspects. Marking is deliberate, from the panel — otherwise
+            // reading a file would silently rewrite the change being traced.
+            onNodeClick={selectPath}
+          />
 
-      <main className="canvas-area">
-        {repository ? (
-          <>
-            <GraphCanvas
-              graph={repository.graph}
-              coverage={repository.coverage}
-              changedPaths={changedPaths}
-              traceResult={traceResult}
-              layoutMode={layoutMode}
-              // A click inspects. Marking is deliberate, from the panel — otherwise
-              // reading a file would silently rewrite the change being traced.
-              onNodeClick={(_, node) => setSelectedPath(node.id)}
-            />
-            <Legend />
+          <Legend />
 
-            {/* Bottom-centre pill: the two things you act on, kept clear of the
-                graph so nothing competes with it. */}
-            <div className="action-dock">
-              <button
-                className="button button-primary"
-                type="button"
-                disabled={changedPaths.size === 0}
-                onClick={handleTrace}
-                title={
-                  changedPaths.size === 0
-                    ? 'Mark at least one file as changed first'
-                    : `Trace from ${changedPaths.size} marked file${changedPaths.size === 1 ? '' : 's'}`
-                }
-              >
-                Trace impact
-                {changedPaths.size > 0 && (
-                  <span className="action-count">{changedPaths.size}</span>
-                )}
-              </button>
-              <LayoutToggle mode={layoutMode} onChange={setLayoutMode} />
-              <span className="action-divider" aria-hidden="true" />
-              <PullRequestInput
-                disabled={false}
-                onResolved={handlePullRequest}
-                onFailed={handlePullRequestFailure}
-              />
-            </div>
+          <p className="workspace-hint">{hint}</p>
 
-            {selectedPath && (
-              <DetailPanel
-                path={selectedPath}
-                graph={repository.graph}
-                traceResult={traceResult}
-                coverage={repository.coverage}
-                isChanged={changedPaths.has(selectedPath.replace('::external', ''))}
-                changedCount={changedPaths.size}
-                onToggleChanged={toggleChangedPath}
-                onClose={() => setSelectedPath(null)}
-              />
-            )}
-          </>
-        ) : (
-          <div className="empty-state">
-            {/* The one call to action, centred where the graph will appear. */}
-            <FolderPicker
-              onFilesSelected={handleFilesSelected}
-              disabled={reading}
-              centred
-            />
-            <p className="empty-hint">
-              Files become nodes, imports become edges. Pick the bundled{' '}
-              <code>sample-repo/</code> folder to try it. Nothing is uploaded — your code
-              stays on this machine.
-            </p>
+          {/* Bottom-centre dock: the two things the user acts on, kept clear of the
+              graph so nothing competes with it. */}
+          <div className="action-dock">
+            <button
+              className="button button-primary"
+              type="button"
+              disabled={changedPaths.size === 0}
+              onClick={handleTrace}
+              title={
+                changedPaths.size === 0
+                  ? 'Mark at least one file as changed first'
+                  : `Trace from ${changedPaths.size} marked file${changedPaths.size === 1 ? '' : 's'}`
+              }
+            >
+              Trace impact
+              {changedPaths.size > 0 && (
+                <span className="action-count">{changedPaths.size}</span>
+              )}
+            </button>
+            <span className="action-divider" aria-hidden="true" />
+            <LayoutToggle mode={viewMode} onChange={setViewMode} />
           </div>
-        )}
-      </main>
+        </div>
 
+        {selectedPath && (
+          <DetailPanel
+            path={selectedPath}
+            graph={repository.graph}
+            traceResult={traceResult}
+            coverage={repository.coverage}
+            isChanged={changedPaths.has(selectedPath.replace('::external', ''))}
+            changedCount={changedPaths.size}
+            onToggleChanged={toggleChangedPath}
+            onClose={() => selectPath(null)}
+          />
+        )}
+      </div>
     </div>
   )
 }

@@ -189,7 +189,7 @@ The tool does **not** claim to know which tests are important or ought to be wri
 - **Executing the repository's code or tests.** Static structure only. This is what keeps every claim verifiable.
 - **Monorepo and multi-package resolution.** Workspaces, package boundaries, and cross-package dependencies are out. Filtering generated files is in.
 - **Repository-wide git history.** PR analysis is bounded; history mining is a different product with a time dimension.
-- **3D visualization.** Force-directed layout was designed for 2D; in 3D nodes fog out with ambiguous depth and occlusion, which works against explainability.
+- **3D as the default view.** The volume is a third view of the same graph, added after the flat views were built and proven. The flat views stay the default, because in three dimensions nodes fog out with ambiguous depth and occlusion, which works against explainability. The volume is where a change reaching outward in every direction at once can be seen, which a flat picture cannot show.
 - **Deployment.** The demo runs locally; a public URL isn't required to satisfy the submission.
 - **Multi-user anything.** No accounts, no sharing, no collaboration.
 

@@ -6,6 +6,7 @@
  * real direction, so "what depends on what" reads directly as left-to-right depth.
  * Same repository in, same picture out — which the product's credibility depends on.
  */
+import { NODE_HEIGHT, NODE_WIDTH } from './geometry'
 import type { LaidOutNode } from './layout'
 
 export interface LayoutNode {
@@ -13,9 +14,10 @@ export interface LayoutNode {
   depth: number
 }
 
-const COLUMN_WIDTH = 220
-const ROW_HEIGHT = 52
-const MARGIN = 40
+/** Wider than a node by enough to leave a visible gutter between columns. */
+const COLUMN_WIDTH = NODE_WIDTH + 64
+const ROW_HEIGHT = NODE_HEIGHT + 16
+const MARGIN = 48
 
 /** Exported so the canvas can place external stubs just past the last source column. */
 export const LAYOUT_GRID = { COLUMN_WIDTH, ROW_HEIGHT, MARGIN } as const
@@ -149,6 +151,99 @@ export function computeDepths(
 }
 
 /**
+ * Every file's direct neighbours, in both directions.
+ *
+ * An edge runs importer → imported, so a file's neighbours are the files it
+ * imports and the files that import it. The ordering pass below needs both.
+ */
+function buildNeighbours(
+  nodes: Array<{ id: string }>,
+  edges: Array<{ from: string; to: string; isExternal: boolean }>,
+): Map<string, string[]> {
+  const idSet = new Set(nodes.map((node) => node.id))
+  const neighbours = new Map<string, string[]>()
+  for (const node of nodes) neighbours.set(node.id, [])
+
+  for (const edge of edges) {
+    if (edge.isExternal) continue
+    if (!idSet.has(edge.from) || !idSet.has(edge.to)) continue
+    neighbours.get(edge.from)!.push(edge.to)
+    neighbours.get(edge.to)!.push(edge.from)
+  }
+
+  return neighbours
+}
+
+/**
+ * Order the files inside each column so the edges between columns cross as
+ * little as possible.
+ *
+ * Sorting each column by name, the way a first cut does, scatters connected
+ * files across the column and turns the picture into a thicket of crossing
+ * lines. The barycentre heuristic fixes it: each file is placed near the
+ * average row of the files it is connected to in the neighbouring column, and
+ * the columns are swept back and forth a few times until the crossings settle.
+ *
+ * Ties are broken by path, and the sweep order is fixed, so the same
+ * repository always produces the same picture — the property the whole product
+ * depends on.
+ */
+function orderColumns(
+  columns: Map<number, string[]>,
+  neighbours: Map<string, string[]>,
+): Map<number, string[]> {
+  const ordered = new Map<number, string[]>()
+  for (const [depth, ids] of columns) ordered.set(depth, [...ids].sort())
+
+  const depths = [...ordered.keys()].sort((left, right) => left - right)
+  if (depths.length < 2) return ordered
+
+  const SWEEPS = 6
+
+  for (let sweep = 0; sweep < SWEEPS; sweep++) {
+    // Alternate the direction of the sweep. Working left to right then right
+    // to left lets a column be placed against neighbours that have already
+    // been placed on one side and will be placed on the other.
+    const forward = sweep % 2 === 0
+    const sequence = forward ? depths : [...depths].reverse()
+
+    for (const depth of sequence) {
+      const ids = ordered.get(depth)!
+      const neighbourDepth = forward ? depth - 1 : depth + 1
+      const neighbourIds = ordered.get(neighbourDepth)
+      if (!neighbourIds) continue
+
+      const rowOf = new Map(neighbourIds.map((id, row) => [id, row]))
+
+      const scored = ids.map((id, row) => {
+        const rows: number[] = []
+        for (const neighbour of neighbours.get(id) ?? []) {
+          const neighbourRow = rowOf.get(neighbour)
+          if (neighbourRow !== undefined) rows.push(neighbourRow)
+        }
+
+        if (rows.length === 0) return { id, key: row }
+        rows.sort((left, right) => left - right)
+        const middle = Math.floor(rows.length / 2)
+        // The median, not the mean: one file with many connections should not
+        // drag the whole column out of line.
+        const key =
+          rows.length % 2 === 1 ? rows[middle] : (rows[middle - 1] + rows[middle]) / 2
+        return { id, key }
+      })
+
+      scored.sort(
+        (left, right) =>
+          left.key - right.key || (left.id < right.id ? -1 : left.id > right.id ? 1 : 0),
+      )
+      ordered.set(depth, scored.map((entry) => entry.id))
+    }
+  }
+
+  return ordered
+}
+
+/**
  * Place each node in a column by depth, stacked vertically within that column.
  * Ties are broken by path so the layout is stable across runs.
  */
@@ -166,30 +261,30 @@ export function layoutGraphLayered(
     else byDepth.set(depth, [node.id])
   }
 
+  const ordered = orderColumns(byDepth, buildNeighbours(nodes, edges))
+
   const placed: LaidOutNode[] = []
 
-  for (const [depth, ids] of byDepth) {
-    const sorted = [...ids].sort()
-    sorted.forEach((id, index) => {
+  for (const [depth, ids] of ordered) {
+    ids.forEach((id, index) => {
       placed.push({
         id,
         position: {
           x: MARGIN + depth * COLUMN_WIDTH,
-          // Centre each column against the tallest one, so the picture reads as a
-          // shape rather than a set of ragged stacks.
           y: MARGIN + index * ROW_HEIGHT,
         },
       })
     })
   }
 
-  // Centre short columns vertically against the tallest column.
-  const maxRows = Math.max(...[...byDepth.values()].map((ids) => ids.length), 1)
+  // Centre short columns vertically against the tallest column, so the picture
+  // reads as a shape rather than a set of ragged stacks.
+  const maxRows = Math.max(...[...ordered.values()].map((ids) => ids.length), 1)
   const fullHeight = (maxRows - 1) * ROW_HEIGHT
 
   return placed.map((node) => {
     const depth = depths.get(node.id) ?? 0
-    const columnLength = byDepth.get(depth)?.length ?? 1
+    const columnLength = ordered.get(depth)?.length ?? 1
     const columnHeight = (columnLength - 1) * ROW_HEIGHT
     return {
       ...node,

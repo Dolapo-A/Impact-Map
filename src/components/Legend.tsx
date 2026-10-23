@@ -9,12 +9,15 @@
  * The coverage swatches mirror the real node badges exactly — solid disc versus
  * hollow ring — because that shape difference is what carries the meaning when
  * blue and purple sit close on the spectrum.
+ *
+ * `inline` is the same key without the panel around it, for use inside a crop of
+ * the interface.
  */
-export function Legend() {
+export function Legend({ variant = 'panel' }: { variant?: 'panel' | 'inline' }) {
   return (
-    <div className="legend">
+    <div className={`legend${variant === 'inline' ? ' is-inline' : ''}`}>
       <div className="legend-group">
-        <span className="legend-heading">Distance from change</span>
+        <span className="legend-heading">Distance from your change</span>
         <span className="legend-row">
           <span className="legend-swatch changed" />
           Changed

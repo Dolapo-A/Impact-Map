@@ -7,8 +7,11 @@ import type { SourceFile } from '../lib/graph'
 interface FolderPickerProps {
   onFilesSelected: (files: SourceFile[], folderName: string) => void
   disabled: boolean
-  /** Centres the button in the empty canvas instead of placing it in a bar. */
-  centred?: boolean
+  /**
+   * `hero` is the large call to action on the landing page. `bar` is the
+   * compact control that lives in the top strip once a repository is open.
+   */
+  variant?: 'hero' | 'bar'
   /**
    * Shows the browser hint beside the button. True on first contact, where the
    * user needs to know the tool wants a whole folder and only some browsers can
@@ -29,7 +32,12 @@ const MAX_FILE_BYTES = 4 * 1024 * 1024
  * selection the right unit: an import pointing at a file the user didn't share
  * would be indistinguishable from an import of an external package.
  */
-export function FolderPicker({ onFilesSelected, disabled, centred, showHint = true }: FolderPickerProps) {
+export function FolderPicker({
+  onFilesSelected,
+  disabled,
+  variant = 'bar',
+  showHint = true,
+}: FolderPickerProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -88,7 +96,7 @@ export function FolderPicker({ onFilesSelected, disabled, centred, showHint = tr
   }
 
   return (
-    <div className={`folder-picker${centred ? ' is-centred' : ''}`}>
+    <div className={`folder-picker is-${variant}`}>
       <input
         ref={inputRef}
         type="file"
@@ -101,13 +109,13 @@ export function FolderPicker({ onFilesSelected, disabled, centred, showHint = tr
         data-testid="folder-input"
       />
       <button
-        className="button button-primary"
+        className="button button-primary folder-picker-button"
         onClick={() => inputRef.current?.click()}
         disabled={disabled}
       >
-        Choose repository folder
+        Choose a repository folder
       </button>
-      {showHint && !centred && (
+      {showHint && variant === 'bar' && (
         <span className="hint">Needs Chrome, Edge, Brave, or Arc. Your code stays on this machine.</span>
       )}
       {error && <p className="notice notice-error">{error}</p>}
